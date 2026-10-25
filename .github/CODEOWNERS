@@ -1,5 +1,0 @@
-# Replace placeholders with approved GitHub handles.
-* @project-maintainers
-/docs/ @domain-reviewers
-/services/ @engineering-reviewers
-/data/ @data-governance-reviewers

@@ -1,9 +1,0 @@
-{
-  "name": "@operational-sense/backend",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Operational Sense backend scaffold",
-  "scripts": {
-    "test": "echo \"No backend tests configured yet\""
-  }
-}
