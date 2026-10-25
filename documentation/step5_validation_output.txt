@@ -1,0 +1,131 @@
+
+=========== A. COUNTS ===========
+Expected: EQ-PUMP 17, EQ-MOTOR 17, EQ-COMP 16, total 50
+ equipment_class_id |         class_name          | cases
+--------------------+-----------------------------+-------
+ EQ-COMP            | Rotary Screw Air Compressor |    16
+ EQ-MOTOR           | Three-Phase Induction Motor |    17
+ EQ-PUMP            | Centrifugal Pump            |    17
+(3 rows)
+
+ total_cases
+-------------
+          50
+(1 row)
+
+Expected: 350 steps in total, every case has exactly 7 steps
+ total_steps
+-------------
+         350
+(1 row)
+
+ cases_with_steps | min_steps_per_case | max_steps_per_case
+------------------+--------------------+--------------------
+               50 |                  7 |                  7
+(1 row)
+
+Expected: 39 cases with a subsystem, 11 without (their wording is not in the approved list), all 50 SUBMITTED
+ cases_with_subsystem | cases_without_subsystem
+----------------------+-------------------------
+                    0 |                      50
+(1 row)
+
+ case_status | count
+-------------+-------
+ DRAFT       |    50
+(1 row)
+
+
+=========== B. ORPHAN CHECKS (every number must be 0) ===========
+                check_name                | problems
+------------------------------------------+----------
+ steps without a case                     |        0
+ mappings without a case                  |        0
+ source links without a case              |        0
+ source links without a source            |        0
+ verification records without a case      |        0
+ cases without any steps                  |        0
+ cases without a mapping row              |        0
+ cases without a verification record      |        0
+ Tier 3 steps without supervisor approval |        0
+(9 rows)
+
+
+=========== C. BAD DATA MUST BE REJECTED (every line must say PASS) ===========
+BEGIN
+NOTICE:  PASS V1 wrong case_status rejected
+NOTICE:  PASS V2 duplicate step number rejected
+NOTICE:  PASS V3 Tier 3 step without supervisor approval rejected
+NOTICE:  PASS V4 invalid tier rejected
+NOTICE:  PASS V5 unknown equipment class rejected
+NOTICE:  PASS V6 subsystem not valid for the class rejected
+NOTICE:  PASS V7 duplicate case reference rejected
+NOTICE:  PASS V8 blank symptom rejected
+NOTICE:  PASS V9 approval without reviewer and date rejected
+DO
+ROLLBACK
+
+=========== D. STRICT RETRIEVAL (from the proposal, Section 3) ===========
+Real data today: all 50 cases are SUBMITTED, none is VERIFIED. Expected: 0 retrievable cases.
+ verified_cases_in_retrieval_index
+-----------------------------------
+                                 0
+(1 row)
+
+DEMO ONLY: we temporarily pretend all 50 cases are VERIFIED, run the queries, then roll back.
+BEGIN
+INSERT 0 50
+SELECT 0
+The current problem (class + subsystem):
+ equipment_class_id | subsystem_name
+--------------------+----------------
+(0 rows)
+
+STAGE 1 STRICT: same class AND same subsystem AND VERIFIED. These are the only cases that can support a recommendation.
+ case_reference | class_name | subsystem_name | status | match_label
+----------------+------------+----------------+--------+-------------
+(0 rows)
+
+RELAXED (informational only): same class, different or missing subsystem. A missing subsystem is NEVER a strict match.
+ case_reference | subsystem_name | match_label
+----------------+----------------+-------------
+(0 rows)
+
+Strict matches available for every class + subsystem pair (0 = the app must say: no verified history yet):
+ equipment_class_id |     subsystem_name      | strict_matches
+--------------------+-------------------------+----------------
+ EQ-COMP            | Air End                 |              0
+ EQ-COMP            | Air Intake              |              0
+ EQ-COMP            | Air-Oil Circuit         |              0
+ EQ-COMP            | Capacity Control        |              0
+ EQ-COMP            | Condensate Management   |              0
+ EQ-COMP            | Cooling System          |              0
+ EQ-COMP            | Oil Separation System   |              0
+ EQ-COMP            | Oil System              |              0
+ EQ-MOTOR           | Bearing Assembly        |              0
+ EQ-MOTOR           | Cooling System          |              0
+ EQ-MOTOR           | Mounting and Foundation |              0
+ EQ-MOTOR           | Power Supply            |              0
+ EQ-MOTOR           | Rotor Assembly          |              0
+ EQ-MOTOR           | Rotor-Stator Interface  |              0
+ EQ-MOTOR           | Stator & Windings       |              0
+ EQ-MOTOR           | Terminal Box            |              0
+ EQ-PUMP            | Bearing Assembly        |              0
+ EQ-PUMP            | Drive Train             |              0
+ EQ-PUMP            | Hydraulic End           |              0
+ EQ-PUMP            | Mechanical Seal         |              0
+ EQ-PUMP            | Shaft Assembly          |              0
+ EQ-PUMP            | Suction and Priming     |              0
+ EQ-PUMP            | Suction Line            |              0
+(23 rows)
+
+ROLLBACK
+After rollback, expected 0 (the demo left no trace):
+ verified_cases_in_retrieval_index
+-----------------------------------
+                                 0
+(1 row)
+
+
+Stage 2 (ranking by vector similarity) needs embeddings, which are built in a later sprint.
+The pgvector similarity query itself was already proven by scripts/verify_pgvector.sql.
