@@ -1,0 +1,12 @@
+name: Data quality issue
+description: Report a schema, provenance, or validation problem
+title: "[Data quality]: "
+body:
+  - type: textarea
+    id: dataset
+    attributes: {label: Dataset/schema affected}
+    validations: {required: true}
+  - type: textarea
+    id: issue
+    attributes: {label: Quality issue and example (redacted)}
+    validations: {required: true}

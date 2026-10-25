@@ -1,0 +1,10 @@
+name: Release
+on:
+  workflow_dispatch:
+jobs:
+  scaffold-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scaffold notice
+        run: echo "Workflow scaffold only; configure validated build and test commands before enabling required checks."
