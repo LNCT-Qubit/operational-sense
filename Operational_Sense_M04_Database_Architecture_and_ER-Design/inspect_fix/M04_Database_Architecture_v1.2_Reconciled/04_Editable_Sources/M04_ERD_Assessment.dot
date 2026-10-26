@@ -1,0 +1,21 @@
+digraph Assessment {
+graph [bgcolor="white", pad="0.35", nodesep="0.5", ranksep="0.75", splines=ortho, fontname="Arial", labelloc="t", labeljust="l", fontsize=20, fontcolor="#1F4E5F"];
+node [shape=plain, fontname="Arial", fontsize=9]; edge [fontname="Arial", fontsize=8, color="#506A78", fontcolor="#314A56", arrowsize=0.65];
+label="Operational Sense — Assessment and reference model (M04 v1.2; canonical entity names)";
+ASSET_NODE [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>ASSET_NODE</B></TD></TR><TR><TD ALIGN="LEFT">PK asset_id</TD></TR></TABLE> >];
+ASSET_CRITICALITY_ASSESSMENT [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>ASSET_CRITICALITY_ASSESSMENT</B></TD></TR><TR><TD ALIGN="LEFT">PK assessment_id; FK asset_id</TD></TR><TR><TD ALIGN="LEFT">method_version, assessed_at, assessed_by</TD></TR><TR><TD ALIGN="LEFT">total_score, category, status</TD></TR></TABLE> >];
+CRITICALITY_FACTOR_SCORE [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>CRITICALITY_FACTOR_SCORE</B></TD></TR><TR><TD ALIGN="LEFT">PK factor_score_id; FK assessment_id</TD></TR><TR><TD ALIGN="LEFT">factor_code, score, weight, rationale</TD></TR></TABLE> >];
+FMEA_ASSESSMENT [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>FMEA_ASSESSMENT</B></TD></TR><TR><TD ALIGN="LEFT">PK fmea_id; FK equipment_class_id</TD></TR><TR><TD ALIGN="LEFT">FK asset_id nullable; FK taxonomy_code nullable</TD></TR><TR><TD ALIGN="LEFT">component_label, cause, effects, detection</TD></TR><TR><TD ALIGN="LEFT">severity, occurrence, detectability, rpn</TD></TR><TR><TD ALIGN="LEFT">method_version, review_status</TD></TR></TABLE> >];
+MEASUREMENT_REFERENCE [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>MEASUREMENT_REFERENCE</B></TD></TR><TR><TD ALIGN="LEFT">PK measurement_reference_id</TD></TR><TR><TD ALIGN="LEFT">FK equipment_class_id</TD></TR><TR><TD ALIGN="LEFT">FK taxonomy_code nullable</TD></TR><TR><TD ALIGN="LEFT">parameter, unit, instrument, location</TD></TR><TR><TD ALIGN="LEFT">reference_value_policy, source_id nullable</TD></TR></TABLE> >];
+EQUIPMENT_CLASS [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>EQUIPMENT_CLASS</B></TD></TR><TR><TD ALIGN="LEFT">PK equipment_class_id</TD></TR></TABLE> >];
+SOURCE_REFERENCE [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>SOURCE_REFERENCE</B></TD></TR><TR><TD ALIGN="LEFT">PK source_id</TD></TR></TABLE> >];
+FAILURE_MODE_TAXONOMY [label=< <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#DCE9ED"><B>FAILURE_MODE_TAXONOMY</B></TD></TR><TR><TD ALIGN="LEFT">PK taxonomy_code</TD></TR><TR><TD ALIGN="LEFT">FK equipment_class_id</TD></TR><TR><TD ALIGN="LEFT">failure_mode_name, review_status</TD></TR></TABLE> >];
+ASSET_NODE -> ASSET_CRITICALITY_ASSESSMENT [label="1 to 0..many"];
+ASSET_CRITICALITY_ASSESSMENT -> CRITICALITY_FACTOR_SCORE [label="1 to 0..many"];
+EQUIPMENT_CLASS -> FMEA_ASSESSMENT [label="1 to 0..many"];
+ASSET_NODE -> FMEA_ASSESSMENT [label="0..1 asset context", style=dashed];
+EQUIPMENT_CLASS -> MEASUREMENT_REFERENCE [label="1 to 0..many"];
+SOURCE_REFERENCE -> MEASUREMENT_REFERENCE [label="0..1 source", style=dashed];
+FAILURE_MODE_TAXONOMY -> FMEA_ASSESSMENT [label="0..1 taxonomy context", style=dashed];
+FAILURE_MODE_TAXONOMY -> MEASUREMENT_REFERENCE [label="0..1 taxonomy context", style=dashed];
+}
