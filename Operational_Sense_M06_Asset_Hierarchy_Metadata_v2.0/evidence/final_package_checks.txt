@@ -1,0 +1,15 @@
+# Final package checks (pre-archive)
+
+- Input v1.0 ZIP integrity: PASS (43 entries; no corrupt ZIP member).
+- Source workbook and M04 archive hashes recorded in `tests/fixtures/expected_source_inventory.json`.
+- Static source/package validator: PASS (0 errors; see `static_validation_output.txt`).
+- Python tests: PASS (5 passed; see `pytest_output.txt`).
+- Bash syntax check for PostgreSQL test runner: PASS (see `shell_syntax_check.txt`).
+- Markdown local links: PASS (0 broken local links).
+- Graphviz diagram generation: PASS (SVG and PNG rendered from the checked-in DOT source).
+- Cache/build-artifact scan: PASS (no `.pytest_cache`, `__pycache__`, `node_modules` or `.git` directory included).
+- PostgreSQL migration/seed/rollback tests: NOT RUN (`psql` and Docker unavailable).
+- Live repository integration: BLOCKED (direct Git remote DNS failure; no local checkout).
+- Formal domain/architecture approvals: PENDING REVIEW.
+
+The final ZIP was extracted to a temporary directory and rechecked: the packaged static validator passed with 0 errors, packaged pytest passed (5 tests), the Bash runner passed `bash -n`, and ZIP integrity plus byte-for-byte comparison of all packaged files passed. This file does not claim database execution or repository integration.
