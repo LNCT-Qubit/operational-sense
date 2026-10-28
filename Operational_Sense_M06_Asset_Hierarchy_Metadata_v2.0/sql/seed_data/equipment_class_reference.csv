@@ -1,0 +1,4 @@
+equipment_class_id,class_name,description,source_sheet,source_row_number,review_status,approval_note
+EQ-PUMP,Centrifugal Pump,Rotodynamic machine that adds energy to a liquid via an impeller.,Equipment_Reference,2,PENDING_REVIEW,Source-backed label; formal approval not established
+EQ-MOTOR,Three-Phase Induction Motor,AC machine converting electrical to mechanical energy via rotating magnetic field.,Equipment_Reference,12,PENDING_REVIEW,Source-backed label; formal approval not established
+EQ-COMP,Rotary Screw Air Compressor,"Positive-displacement compressor using meshing screw rotors, usually oil-flooded.",Equipment_Reference,22,PENDING_REVIEW,Source-backed label; formal approval not established

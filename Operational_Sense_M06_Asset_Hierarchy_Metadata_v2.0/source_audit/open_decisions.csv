@@ -1,0 +1,11 @@
+Decision_ID,Owner,Decision_Required,Impact,Status
+Q01,Group 1 + M06,Confirm canonical hierarchy levels and whether Subsystem is a formal node or descriptive metadata.,Blocks hierarchy-level and parent-child constraints.,OPEN
+Q02,Groups 1 + 3 + 4,Approve Common Data Model v1.0 and schema contract.,Blocks final field contract and acceptance sign-off.,OPEN
+Q04,M05,"Confirm PostgreSQL types, schema, migration framework, FK actions, indexes and naming conventions.",Blocks integration of candidate SQL with the actual project schema.,OPEN
+Q05,Group 1 + M06,Confirm whether plant/facility/line fields in synthetic cases represent real assets.,Avoids converting synthetic context into physical asset records.,OPEN
+Q09,M05 + M06,Approve asset identifier generation and uniqueness scope.,Candidate BIGINT identity is provisional only.,OPEN
+Q10,Groups 1 + 3 + 4,Record formal architecture approval and cross-group decisions.,Required before production schema can be called approved.,OPEN
+STACK-01,Project owner / backend group,Resolve repository README Spring Boot vs task prompt Node.js + Express.,"Determines migration framework, integration paths and backend conventions.",OPEN
+M05-01,M05,Provide current M05 schema/migrations or a local repository checkout.,Prevents duplicate entity definitions and unverified physical compatibility.,BLOCKED
+G1-01,Group 1 / domain steward,Review equipment class labels and 30 subsystem/component/taxonomy mappings.,Source presence does not establish approval.,PENDING REVIEW
+G4-01,Group 4,Review the Common Data Model and M06 integration contract.,Required cross-group governance review.,PENDING REVIEW
