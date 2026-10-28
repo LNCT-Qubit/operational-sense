@@ -1,3 +1,117 @@
 # ISO 14224 Mapping
 
-ISO 14224 is identified as equipment-taxonomy context in the source framework; the full standard text was not reviewed as part of this starter. Treat mappings as provisional until the project confirms the edition, field definitions, licensing/access conditions, and fit for the target dataset. Do not claim compliance based only on this mapping note.
+**FMEA & Failure Classification** · Epic 1 · Owner: Group 1
+> Source workbook: [`services/backend/src/modules/taxonomy/G1_Failure_Mode_and_FMEA_Taxonomy_v1.0.xlsx`](../../services/backend/src/modules/taxonomy/G1_Failure_Mode_and_FMEA_Taxonomy_v1.0.xlsx)
+
+## 1. What this mapping does and does not claim
+
+**ISO 14224:2016** (*Petroleum, petrochemical and natural gas industries – Collection and exchange of reliability and maintenance data for equipment*, Edition 3) is used as the reference for equipment taxonomy, failure data, maintenance data and data-quality concepts.
+
+| Claim | Status |
+|---|---|
+| Each FMEA row is tagged with an ISO 14224 Annex B **failure-mode abbreviation** | Yes (12 distinct abbreviations used) |
+| Project hierarchy codes (`PUMP.BRNG.ROLL` etc.) are ISO codes | **No.** They are project-local |
+| Equipment classes map one-to-one to ISO 14224 equipment classes | **Not verified.** Boundary and subunit mapping needs the licensed standard |
+| Clause/table-level citations | **Not yet.** Sources are cited at document level only |
+
+The standard is copyrighted. This repository contains only project-authored labels and abbreviations, not reproduced standard text or tables. Use an authorised copy for any detailed code-level work.
+
+## 2. Failure-mode abbreviations used
+
+Abbreviations are from ISO 14224 Annex B. The expansions below are working labels; confirm exact wording against the licensed standard.
+
+| Abbrev. | Working label | Rows | Failure modes tagged |
+|---|---|---|---|
+| `VIB` | Vibration | 9 | Bearing Wear; Coupling Misalignment; Low-Flow Recirculation; Broken Rotor Bar; Soft Foot / Mechanical Looseness; Bearing Electrical Discharge Damage (Fluting); Air-Gap Eccentricity / Rotor-Stator Rub; Rotor Imbalance; Air End Bearing Failure |
+| `LOO` | Low output | 4 | Impeller / Wear Ring Wear; Air Ingress / Loss of Prime; Rotor Wear / Clearance Increase; Clogged Air Filter |
+| `OHE` | Overheating | 4 | Bearing Overheating (Lubrication Failure); Cooling Airflow Blockage; Loose Electrical Connection; Cooler Fouling |
+| `PLU` | Plugged / choked | 3 | Strainer Blockage; Separator Element Clogging; Condensate Drain Blockage |
+| `FTF` | Fail to function | 2 | Unloader Valve Sticking; Solenoid Valve Failure |
+| `PDE` | Parameter deviation | 2 | Single-Phasing (Phase Loss); Thermostatic Valve Sticking |
+| `BRD` | Breakdown | 1 | Insulation Breakdown |
+| `ELP` | External leakage – process medium | 1 | Seal Face Leakage |
+| `ELU` | External leakage – utility medium | 1 | Bearing Housing Seal Failure |
+| `INL` | Internal leakage | 1 | Minimum Pressure Valve Leakage / Sticking |
+| `NOI` | Noise | 1 | Cavitation |
+| `STD` | Structural deficiency | 1 | Shaft Fatigue Fracture |
+
+## 3. Row-level mapping
+
+Every FMEA row, with its project code and ISO abbreviation.
+
+### Centrifugal Pump (`EQ-PUMP`)
+
+| Project code | Failure mode | ISO FM | Primary cited sources |
+|---|---|---|---|
+| `PUMP.BRNG.ROLL` | Bearing Wear | `VIB` | ISO 14224:2016 Annex B; ISO 281 (rolling bearing life); Bloch & Geitner, Machinery Failure Analysis and Troubleshooting |
+| `PUMP.SEAL.FACE` | Seal Face Leakage | `ELP` | ISO 21049 / API 682 (pump shaft sealing systems); API 610 / ISO 13709; Bloch & Budris, Pump User's Handbook |
+| `PUMP.HYDR.IMPL` | Cavitation | `NOI` | ANSI/HI 9.6.1 (NPSH margin guideline); Gülich, Centrifugal Pumps; Karassik et al., Pump Handbook |
+| `PUMP.HYDR.WEAR` | Impeller / Wear Ring Wear | `LOO` | API 610 / ISO 13709; Karassik et al., Pump Handbook; Kirloskar pump O&M manual |
+| `PUMP.DRVT.CPLG` | Coupling Misalignment | `VIB` | API 610 / ISO 13709; ANSI/HI 9.6.4 (rotodynamic pump vibration); Bloch & Geitner, Machinery Failure Analysis and Troubleshooting |
+| `PUMP.SUCT.STRN` | Strainer Blockage | `PLU` | ANSI/HI 9.6.1 (suction conditions); Kirloskar pump O&M manual; ISO 14224:2016 Annex B |
+| `PUMP.SHFT.SHAF` | Shaft Fatigue Fracture | `STD` | API 610 / ISO 13709 (shaft stiffness and deflection); Gülich, Centrifugal Pumps; Bloch & Geitner, Machinery Failure Analysis and Troubleshooting |
+| `PUMP.SUCT.PRIM` | Air Ingress / Loss of Prime | `LOO` | Karassik et al., Pump Handbook; Kirloskar pump O&M manual; ISO 14224:2016 Annex B |
+| `PUMP.HYDR.RECR` | Low-Flow Recirculation | `VIB` | ANSI/HI 9.6.3 (allowable operating region); Gülich, Centrifugal Pumps; API 610 / ISO 13709 |
+| `PUMP.BRNG.SEAL` | Bearing Housing Seal Failure | `ELU` | API 610 / ISO 13709 (bearing housing protection); Bloch & Geitner, Machinery Failure Analysis and Troubleshooting; Kirloskar pump O&M manual |
+
+### Three-Phase Induction Motor (`EQ-MOTOR`)
+
+| Project code | Failure mode | ISO FM | Primary cited sources |
+|---|---|---|---|
+| `ELEC.MOT.STAT` | Insulation Breakdown | `BRD` | IEEE Std 43-2013 (insulation resistance testing); Bonnett & Soukup, stator and rotor failures in squirrel-cage motors (IEEE Trans. Ind. Appl., 1992); IEC 60034-1 |
+| `ELEC.MOT.BRNG` | Bearing Overheating (Lubrication Failure) | `OHE` | ISO 281; ABB Low Voltage Motors installation, operation, maintenance manual; Bonnett & Soukup (IEEE Trans. Ind. Appl., 1992) |
+| `ELEC.MOT.ROTR` | Broken Rotor Bar | `VIB` | Thomson & Fenger, Current Signature Analysis to Detect Induction Motor Faults (IEEE Ind. Appl. Mag., 2001); Bonnett & Soukup (IEEE Trans. Ind. Appl., 1992) |
+| `ELEC.MOT.COOL` | Cooling Airflow Blockage | `OHE` | IEC 60034-6 (methods of cooling); IEC 60034-1; NEMA MG 1 |
+| `ELEC.MOT.TERM` | Loose Electrical Connection | `OHE` | NEMA MG 1; IEC 60034-1; ABB Low Voltage Motors installation, operation, maintenance manual |
+| `MOT.MNTG.FEET` | Soft Foot / Mechanical Looseness | `VIB` | ISO 20816-1 (vibration evaluation); Bloch & Geitner, Machinery Failure Analysis and Troubleshooting; ABB Low Voltage Motors manual |
+| `ELEC.MOT.SUPP` | Single-Phasing (Phase Loss) | `PDE` | NEMA MG 1 (voltage unbalance); IEC 60034-1; Bonnett & Soukup (IEEE Trans. Ind. Appl., 1992) |
+| `ELEC.MOT.BRDC` | Bearing Electrical Discharge Damage (Fluting) | `VIB` | IEC TS 60034-25 (converter-fed motors); ABB Low Voltage Motors manual; Bonnett & Soukup (IEEE Trans. Ind. Appl., 1992) |
+| `ELEC.MOT.AGAP` | Air-Gap Eccentricity / Rotor-Stator Rub | `VIB` | Thomson & Fenger (IEEE Ind. Appl. Mag., 2001); Bonnett & Soukup (IEEE Trans. Ind. Appl., 1992); ISO 20816-1 |
+| `ELEC.MOT.IMBL` | Rotor Imbalance | `VIB` | ISO 21940-11 (formerly ISO 1940-1, balance quality); ISO 20816-1; Bloch & Geitner, Machinery Failure Analysis and Troubleshooting |
+
+### Rotary Screw Air Compressor (`EQ-COMP`)
+
+| Project code | Failure mode | ISO FM | Primary cited sources |
+|---|---|---|---|
+| `COMP.AEND.ROTR` | Rotor Wear / Clearance Increase | `LOO` | API 619 (rotary positive displacement compressors); Atlas Copco Compressed Air Manual; ISO 14224:2016 Annex B |
+| `COMP.OSEP.ELEM` | Separator Element Clogging | `PLU` | Atlas Copco GA 37 instruction book (GA 30-90 series); Atlas Copco Compressed Air Manual; ISO 8573-1 (compressed air purity) |
+| `COMP.INTK.FILT` | Clogged Air Filter | `LOO` | Atlas Copco Compressed Air Manual; Atlas Copco GA 37 instruction book; ISO 8573-1 |
+| `COMP.COOL.COLR` | Cooler Fouling | `OHE` | Atlas Copco GA 37 instruction book; Atlas Copco Compressed Air Manual; ISO 14224:2016 Annex B |
+| `COMP.VALV.UNL` | Unloader Valve Sticking | `FTF` | Atlas Copco GA 37 instruction book; API 619; Atlas Copco Compressed Air Manual |
+| `COMP.VALV.MPV` | Minimum Pressure Valve Leakage / Sticking | `INL` | Atlas Copco GA 37 instruction book; Atlas Copco Compressed Air Manual |
+| `COMP.AEND.BRNG` | Air End Bearing Failure | `VIB` | API 619; ISO 281; Atlas Copco Compressed Air Manual |
+| `COMP.OILS.THRM` | Thermostatic Valve Sticking | `PDE` | Atlas Copco GA 37 instruction book; Atlas Copco Compressed Air Manual |
+| `COMP.VALV.SOL` | Solenoid Valve Failure | `FTF` | Atlas Copco GA 37 instruction book; Atlas Copco Compressed Air Manual |
+| `COMP.COND.DRN` | Condensate Drain Blockage | `PLU` | ISO 8573-1; Atlas Copco Compressed Air Manual; Atlas Copco GA 37 instruction book |
+
+## 4. Equipment-class alignment
+
+| Project class | ID | Relationship to ISO 14224 (as recorded in workbook) |
+|---|---|---|
+| Industrial asset | `EQ-ROOT` | Project hierarchy root; not an ISO code. |
+| Rotating equipment | `EQ-ROTATING` | Project grouping; not an ISO code. |
+| Pump | `EQ-PUMP` | Equipment-class concept aligned in spirit; verify exact class/subunit mapping against licensed standard and asset boundary. |
+| Electric motor | `EQ-MOTOR` | Project extension for broad manufacturing scope; verify applicability and exact taxonomy against asset context. |
+| Air compressor | `EQ-COMP` | Equipment-class concept; confirm compressor subtype and boundary for each asset. |
+
+Summary: pump is aligned in concept with ISO 14224 equipment classes; **electric motor is a project extension** for broad manufacturing scope; air compressor needs subtype and boundary confirmation per asset.
+
+## 5. Observations from the mapping
+
+- **Vibration dominates.** 9 of 30 rows are tagged `VIB`, including very different mechanisms (bearing wear, misalignment, rotor imbalance, eccentricity, EDM fluting, soft foot, broken rotor bar). `VIB` therefore cannot discriminate between failure modes; it is a classification level, not a diagnosis. The project hierarchy code and failure mode name carry the discriminating information.
+- Where a row's mode is a *mechanism* (e.g. cavitation) and ISO FM is a *manifestation* (noise), the tag is the observable effect class. This is intentional for `NOI`, `VIB`, `OHE`.
+- `ELP` vs `ELU` distinguishes leakage of the process medium (seal face leakage) from leakage of the utility medium (bearing-housing lubricant).
+- Some tags are judgement calls that the reviewer should confirm: `STD` for shaft fatigue fracture, `PDE` for single-phasing and thermostatic valve sticking, `INL` for minimum pressure valve leakage, `FTF` for unloader and solenoid valve faults.
+
+## 6. Next steps for a licensed review
+
+1. Obtain an authorised copy of ISO 14224:2016.
+2. Confirm each of the 12 abbreviations and its definition.
+3. Confirm equipment-class and subunit mapping for pump, motor and compressor, and record the boundary for each asset.
+4. Replace document-level citations with clause/table references and update the row status to *Verified* where supported.
+5. Record any deviations as project extensions.
+
+## 7. Source register entries
+
+- `SRC-STD-001` – ISO 14224:2016, International standard, ISO, 2016, Edition 3; confirmed current in ISO catalogue. Status: *reference identified; clause-level mapping requires licensed standard review*. <https://www.iso.org/standard/64076.html>
+- Related: `SRC-STD-002` IEC 60812:2018 for the FMEA process (see [`fmea-methodology.md`](fmea-methodology.md)).

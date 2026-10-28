@@ -256,7 +256,7 @@ The technical proposal establishes the following architecture direction.
 | Semantic representation | Embeddings |
 | Synchronization | Background Sync where supported, with polling fallback |
 | Version control | Git and GitHub |
-| CI/CD | Automated repository workflows and CI checks |
+| CI/CD | Automated  workflows and CI checks |
 
 Exact runtime versions, dependency versions and provider selections must be maintained in the service configuration and technical documentation.
 
