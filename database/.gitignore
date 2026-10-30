@@ -1,0 +1,17 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# macOS and editor files
+.DS_Store
+.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Database backups and local dumps
+*.dump
+*.backup
