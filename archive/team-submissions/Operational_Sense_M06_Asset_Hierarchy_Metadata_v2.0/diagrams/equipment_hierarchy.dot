@@ -1,0 +1,16 @@
+digraph M06 {
+  rankdir=TB;
+  graph [fontname="Arial", labelloc="t", label="Operational Sense M06 — provisional data model"];
+  node [shape=box, style="rounded,filled", fillcolor="#F4F6F8", color="#44546A", fontname="Arial"];
+  edge [fontname="Arial", color="#44546A"];
+  equipment_class [label="equipment_class\n3 source-backed classes\nreview_status=PENDING_REVIEW"];
+  asset_node [label="asset_node\nphysical / hierarchy node\nasset_id BIGINT identity (provisional)"];
+  component_ref [label="m06_equipment_component_reference\n30 source mappings\nPENDING_REVIEW"];
+  note [shape=note, label="Subsystem ID not defined in source.\nSubsystem remains descriptive metadata.\nHierarchy-level approval pending (M04 Q01).", fillcolor="#FFF7E6"];
+  blocker [shape=note, label="M04 formal approval pending.\nM05 schema not visible.\nSpring Boot vs Node.js stack conflict.", fillcolor="#FFF7E6"];
+  equipment_class -> asset_node [label="equipment_class_id FK"];
+  asset_node -> asset_node [label="parent_asset_id self-FK\ncycle trigger + advisory lock"];
+  equipment_class -> component_ref [label="equipment_class_id FK"];
+  component_ref -> note [style=dashed, arrowhead=none];
+  asset_node -> blocker [style=dashed, arrowhead=none];
+}
