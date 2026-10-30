@@ -1,0 +1,60 @@
+BEGIN
+INSERT 0 2
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+SET
+              set_config
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+DO
+NOTICE:  PASS T1 read Org B cases as Org A (expect 0 rows): 0
+NOTICE:  PASS T2 insert case with own organization
+DO
+NOTICE:  PASS T3 insert with other organization rejected
+DO
+NOTICE:  PASS T4 update Org B row as Org A (expect 0 rows): 0
+DO
+NOTICE:  PASS T5 moving a row to another organization rejected
+DO
+NOTICE:  PASS T6 delete denied
+DO
+NOTICE:  PASS T7 Tier 3 step without supervisor approval rejected
+NOTICE:  PASS T8 duplicate step number rejected
+NOTICE:  PASS T9 invalid case_status rejected
+DO
+DO
+ set_config
+------------
+
+(1 row)
+
+NOTICE:  PASS T11 hierarchy cycle rejected
+NOTICE:  PASS T10 no tenant context (expect 0 rows): 0
+DO
+RESET
+   rolname   | rolsuper | rolbypassrls
+-------------+----------+--------------
+ opsense_app | f        | f
+(1 row)
+
+        relname        | relrowsecurity | relforcerowsecurity
+-----------------------+----------------+---------------------
+ asset_node            | t              | t
+ audit_log             | t              | t
+ case_failure_mapping  | t              | t
+ case_safety_procedure | t              | t
+ case_source           | t              | t
+ case_spare_part       | t              | t
+ case_verification     | t              | t
+ historical_case       | t              | t
+ media_evidence        | t              | t
+ operational_case      | t              | t
+ organization          | t              | t
+ troubleshooting_step  | t              | t
+(12 rows)
+
+ROLLBACK
