@@ -1,0 +1,37 @@
+OPERATIONAL SENSE — M04 DATABASE ARCHITECTURE
+Revision: v1.2 reconciled review package
+Status: Ready for cross-group review; NOT marked implementation-approved.
+
+Changes made in this revision
+1. Aligned the reference workbook's package version to M04 v1.2.
+2. Removed the unsupported claim that a specific Common Data Model version is approved; the exact CDM/JSON Schema version remains an explicit open dependency.
+3. Rebuilt the three ERD views from the canonical entity inventory and relationship rules.
+4. Replaced inconsistent diagram names:
+   - FAILURE_MODE -> FAILURE_MODE_TAXONOMY and FAILURE_MODE_VOCABULARY, as distinct entities.
+   - CASE_TAXONOMY_MAP -> CASE_FAILURE_MAPPING.
+   - FMEA_RECORD -> FMEA_ASSESSMENT.
+5. Clarified FMEA context: equipment class is required; asset and taxonomy contexts are optional in the logical model.
+6. Clarified MEASUREMENT_REFERENCE as equipment-class scoped with optional taxonomy and source references; it is not an actual measurement observation.
+7. Rebuilt Graphviz PNG/SVG exports and aligned the Mermaid source.
+8. Updated the Word report's embedded diagrams and added model source-of-truth/revision-control language.
+9. Re-exported the PDF from the revised Word report.
+10. Added this change log and a release-readiness gate.
+
+Checks performed
+- Word document opens and contains the expected revision-control language.
+- Excel workbook opens; Read_Me reports M04 v1.2 and Q02 remains open pending the approved Common Data Model artifact/version.
+- Graphviz successfully generated all three PNG and SVG exports from editable .dot sources.
+- ERD naming checked against the workbook's canonical logical entity names for the issues identified in the prior review.
+- PDF regenerated from the revised DOCX.
+
+Items that cannot honestly be marked complete by M04 alone
+- Formal approval of the Common Data Model and exact JSON Schema version by Groups 1, 3 and 4.
+- Final plant asset hierarchy contract and class/type boundary.
+- Domain approval of taxonomy gaps/ambiguous mappings and synthetic troubleshooting content.
+- Approval of criticality and FMEA scoring scales/formula.
+- M05 confirmation of PostgreSQL types, nullability, constraints, indexes and migration behavior.
+- Group 3 approval of retrieval metadata and eligibility rules.
+- Independent recount of source workbook metrics against the original upstream workbook is still a source-validation task; counts in the report are described as reported/audited inputs, not proof of technical approval.
+
+Approval statement
+This package has been reconciled for consistency and is suitable for the next formal review. It is not represented as 10/10, production validated, or formally approved while the external decisions above remain open. Record owners, dates, evidence and approvals in the project issue/change log before marking the architecture Approved.
