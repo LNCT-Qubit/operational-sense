@@ -1,6 +1,0 @@
-M04 v1.2 — reconciled logical design package.
-Canonical source of truth: Entity_Inventory and Relationships worksheets in M04_Entity_Relationship_Reference_v1.2.xlsx.
-All ERD entity names and displayed keys were aligned to the canonical logical entity names. Conceptual diagrams do not replace field-level mappings or the open-decision register.
-Asset hierarchy and knowledge taxonomy are separate. Synthetic cases are not automatically linked to real ASSET_NODE records.
-M05 owns PostgreSQL DDL and physical constraints. Cross-group Common Data Model approval remains pending; no version is represented as approved by this package.
-Graphviz .dot files are editable source for the ERD PNG/SVG exports. Mermaid source is an additional editable representation. Regenerate exports after approved model changes.
