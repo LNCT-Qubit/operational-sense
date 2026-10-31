@@ -1,0 +1,28 @@
+Q01  High   PASS  Case count | 50 cases (expected 50)
+Q02  High   PASS  Step count | 350 steps (expected 350)
+Q03  High   PASS  Unique case references | duplicates: []
+Q04  Medium PASS  Cases per equipment class | {'EQ-PUMP': 17, 'EQ-MOTOR': 17, 'EQ-COMP': 16}
+Q05  Medium FAIL  Required case fields populated | component_name blank in 11 cases
+Q06  High   PASS  Every case model exists in the model list | missing: []; 19 models defined, all illustrative
+Q07  High   PASS  Steps link to cases, numbered 1..7 | orphans=0, bad numbering=[], cases without steps=[]
+Q08  Medium PASS  Tier pattern 1,1,1,2,2,2,3 | violations: []
+Q09  High   PASS  Every Tier-3 step requires supervisor approval | violations: 0
+Q10  High   PASS  Tier-3 steps mention LOTO / lock-out | without: 0
+Q11  Low    PASS  step_reference matches case and step number | violations: 0
+Q12  High   PASS  Taxonomy / vocabulary references consistent | cases w/o mapping seed=[], mismatches=[], unknown FM ids=[]
+Q13  Medium WARN  Cases without a taxonomy code (known FMEA gaps) | 11 cases: CASE-PUMP-010, CASE-PUMP-011, CASE-PUMP-012, CASE-MOT-004, CASE-MOT-007, CASE-MOT-010, CASE-MOT-017, CASE-COMP-006, CASE-COMP-007, CASE-COMP-010, CASE-COMP-016
+Q14  Medium PASS  Source ids referenced exist | unknown: []
+Q15  High   PASS  A mechanism exists that sets operational_case.subsystem_id | Step 4.5 sets subsystem_id: False; m09_010 fix file present: True. Label matches approved subsystem for 39 cases; 11 unresolved (CASE-PUMP-010, CASE-PUMP-011, CASE-PUMP-012, CASE-MOT-004, CASE-MOT-007
+Q16  Medium WARN  Cases whose subsystem label is not in the approved list | 11 cases need a Group 1 mapping decision
+Q17  Medium WARN  Acceptance criteria are case-specific | 1 distinct value(s) over 50 cases; value says the OEM/site source is 'not stated' (placeholder, not a limit)
+Q18  Medium WARN  Steps with generic measurement-point wording | 141 of 350 steps
+Q19  Low    INFO  Cases flagged needs_depth_expansion | 15: CASE-MOT-011, CASE-MOT-012, CASE-MOT-015, CASE-COMP-002, CASE-COMP-004, CASE-COMP-006, CASE-COMP-007, CASE-COMP-009, CASE-COMP-010, CASE-COMP-011, CASE-COMP-012, CASE-COMP-013, CASE-COMP-014, CASE
+Q20  Medium PASS  No exact / near-duplicate cases within a class (Jaccard >= 0.6) | exact duplicate symptom texts=0; same-class near-dups=[]; cross-class pairs>=0.6 (informational)=[]
+Q21  High   PASS  No placeholder text loaded as a spare part | spare rows=[], links=[]
+Q22  High   PASS  Each spare link resolves to exactly one spare row (case-specific join) | links=98, not-exactly-one=[]; original name-only join would create 119 rows
+Q23  Medium WARN  Safety procedures are class-specific | 14 safety rows, all general (class NULL): every case links to all 14 (700 links)
+Q24  High   PASS  Import keeps all cases DRAFT + demo_only_until_expert_review (+ synthetic) | import defaults: {'case_status': 'DRAFT', 'retrieval_eligibility': 'demo_only_until_expert_review'}; model/synthetic flags hard-coded TRUE in the import SELECT
+Q25  Info   INFO  All 50 cases state illustrative operating context / no recorded readings | 50 of 50
+Q26  Info   INFO  Scope of contradiction checking | Only structural contradictions are tested (class/subsystem/component vs taxonomy, tier vs approval, status vs eligibility). Semantic symptom/cause/measurement contradictions need expert review.
+
+FAIL: 1  WARN: 5  PASS: 17  INFO: 3

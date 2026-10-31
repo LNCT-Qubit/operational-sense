@@ -1,0 +1,791 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://operational-sense.example/schemas/troubleshooting_case/1.0.0",
+  "title": "Operational Sense troubleshooting case (canonical v1.0.0)",
+  "description": "One structured troubleshooting case. Field names are the operational_case/troubleshooting_step column names (migration 005). Similarity is not diagnosis: a case is historical knowledge, never a confirmed diagnosis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_reference",
+    "equipment_class_id",
+    "model_is_illustrative",
+    "symptom_text",
+    "is_synthetic",
+    "case_status",
+    "retrieval_eligibility",
+    "troubleshooting_steps",
+    "verification"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "description": "Canonical case schema version. Bumped per schema_version.md."
+    },
+    "case_reference": {
+      "type": "string",
+      "pattern": "^CASE-[A-Z]{2,5}-[0-9]{3,}$",
+      "description": "Business ID, unique per organisation (operational_case.case_reference). The primary key case_id (UUID) is DB-generated and never invented in JSON."
+    },
+    "equipment_class_id": {
+      "type": "string",
+      "enum": [
+        "EQ-PUMP",
+        "EQ-MOTOR",
+        "EQ-COMP"
+      ],
+      "description": "equipment_class.equipment_class_id. Sprint 1 scope: pump, motor, compressor."
+    },
+    "subsystem_source_label": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Subsystem wording exactly as recorded in the source workbook. Always kept."
+    },
+    "subsystem_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Approved subsystem name valid for the class (class_subsystem). null = unresolved. JSON-side representation of operational_case.subsystem_id, resolved by name at load time."
+    },
+    "component_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Component within the subsystem, e.g. 'Rolling Element Bearing'. null = unresolved."
+    },
+    "model_designation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Equipment model designation (equipment_model.model_designation). Resolved to equipment_model_id at load time."
+    },
+    "model_is_illustrative": {
+      "type": "boolean",
+      "description": "true = model name is illustrative, not a real installed asset."
+    },
+    "asset_id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "description": "asset_node.asset_id of a real asset. Must be null for synthetic cases."
+    },
+    "plant_facility": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Plant/facility text context (M04 Q05 open)."
+    },
+    "production_line": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Production line text context."
+    },
+    "symptom_category": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Symptom category, e.g. 'Noise/Vibration/Temperature'."
+    },
+    "symptom_text": {
+      "type": "string",
+      "pattern": "\\S",
+      "description": "Original technician observation, verbatim (Hinglish allowed). Never rewritten by the pipeline."
+    },
+    "symptom_structured": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Normalised English symptom summary."
+    },
+    "operating_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Operating condition when observed. Values tagged '(illustrative)' are not field readings."
+    },
+    "symptom_frequency": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "How often / how it progresses."
+    },
+    "severity_proposed": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "Low",
+        "Low-Medium",
+        "Medium",
+        "Medium-High",
+        "High",
+        "Critical",
+        null
+      ],
+      "description": "Proposed (not approved) severity."
+    },
+    "primary_suspected_cause": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Suspected cause. A hypothesis, never a confirmed finding."
+    },
+    "alternative_causes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Other suspected causes."
+    },
+    "confirmed_cause": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Cause confirmed by inspection/test. null until confirmed. Must not be copied from the suspected cause."
+    },
+    "root_cause_confirmation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Evidence that confirmed the cause. Required when confirmed_cause is set."
+    },
+    "failure_mechanism": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Physical failure mechanism."
+    },
+    "failure_effect": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Effect of the failure."
+    },
+    "differential_diagnosis": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "How to tell the suspected cause from alternatives."
+    },
+    "corrective_action_text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Corrective action (historical information, not an instruction). Needs supervisor approval and site procedures."
+    },
+    "required_spares_text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Spares mentioned in free text."
+    },
+    "post_repair_verification": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "How the repair is verified."
+    },
+    "acceptance_criteria": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Acceptance criteria. OEM/site values must be taken from OEM manual or approved baseline; none are invented here."
+    },
+    "recurrence_prevention": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Recurrence prevention."
+    },
+    "early_warning": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Early-warning indicators."
+    },
+    "observed_outcome": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Observed outcome after the action. JSON-side only: operational_case has NO outcome column, so the loader rejects non-null values until Group 2 approves a column. null for all synthetic cases (no field record)."
+    },
+    "case_origin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "e.g. 'Synthetic Scenario'."
+    },
+    "evidence_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Evidence type."
+    },
+    "source_reliability": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        null
+      ],
+      "description": "Reliability class of the case's evidence."
+    },
+    "is_synthetic": {
+      "type": "boolean",
+      "description": "true = no real field record. Never flipped silently."
+    },
+    "needs_depth_expansion": {
+      "type": "boolean",
+      "description": "Flagged for more detail by M09 review."
+    },
+    "case_status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "SUBMITTED",
+        "VERIFIED",
+        "REJECTED",
+        "REVOKED"
+      ],
+      "description": "Lifecycle status (operational_case.case_status)."
+    },
+    "retrieval_eligibility": {
+      "type": "string",
+      "enum": [
+        "demo_only_until_expert_review",
+        "eligible",
+        "excluded"
+      ],
+      "description": "Whether retrieval may show the case as trusted evidence."
+    },
+    "verification_duration_seconds": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Seconds spent verifying (operational_case.verification_duration_seconds)."
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "DB-generated. null in exports (never fabricated)."
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "DB-generated. null in exports."
+    },
+    "troubleshooting_steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/step"
+      },
+      "description": "Ordered diagnostic steps (troubleshooting_step)."
+    },
+    "failure_mappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/failure_mapping"
+      },
+      "description": "case_failure_mapping rows. Unresolved codes stay null."
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source_link"
+      },
+      "description": "case_source rows."
+    },
+    "spare_parts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/spare_part_link"
+      },
+      "description": "case_spare_part rows (case-specific)."
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "allOf": [
+    {
+      "description": "VERIFIED needs an approved verification record naming a reviewer and date.",
+      "if": {
+        "properties": {
+          "case_status": {
+            "const": "VERIFIED"
+          }
+        },
+        "required": [
+          "case_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "overall_decision": {
+                "enum": [
+                  "APPROVED",
+                  "APPROVED WITH CHANGES"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "'eligible' retrieval needs VERIFIED status.",
+      "if": {
+        "properties": {
+          "retrieval_eligibility": {
+            "const": "eligible"
+          }
+        },
+        "required": [
+          "retrieval_eligibility"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_status": {
+            "const": "VERIFIED"
+          }
+        }
+      }
+    },
+    {
+      "description": "A confirmed cause needs its confirming evidence.",
+      "if": {
+        "properties": {
+          "confirmed_cause": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirmed_cause"
+        ]
+      },
+      "then": {
+        "required": [
+          "root_cause_confirmation"
+        ],
+        "properties": {
+          "root_cause_confirmation": {
+            "type": "string",
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    {
+      "description": "Synthetic cases are not real assets.",
+      "if": {
+        "properties": {
+          "is_synthetic": {
+            "const": true
+          }
+        },
+        "required": [
+          "is_synthetic"
+        ]
+      },
+      "then": {
+        "properties": {
+          "asset_id": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_number",
+        "tier",
+        "check_measurement",
+        "supervisor_approval_required"
+      ],
+      "properties": {
+        "step_number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Order of the step within the case (1..n, contiguous). Maps to troubleshooting_step.step_number."
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "description": "1 = observation, 2 = measurement, 3 = intervention (needs supervisor approval)."
+        },
+        "step_reference": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^DS-[A-Z]+-[0-9]{3,}-[0-9]{2}$",
+          "description": "Stable step ID, e.g. DS-PUMP-001-04. Maps to troubleshooting_step.step_reference."
+        },
+        "diagnostic_question": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Question the step answers."
+        },
+        "check_measurement": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "What to check or measure (or, for tier 3, the intervention)."
+        },
+        "required_instrument": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Instrument or 'None (visual / observational)'."
+        },
+        "expected_observation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What a positive/abnormal result looks like. Not an OEM limit."
+        },
+        "interpretation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What the observation suggests."
+        },
+        "possible_failure_indication": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Failure indications linked to the result."
+        },
+        "next_step": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Guidance on what to do next."
+        },
+        "safety_warning": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Step-specific safety text. Generic wording is tracked in the unresolved register."
+        },
+        "supervisor_approval_required": {
+          "type": "boolean",
+          "description": "Always true for tier 3 (mirrors chk_tier3_needs_approval)."
+        },
+        "source_reference": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Semicolon-separated source IDs from the workbook (e.g. 'S03; S14'). JSON-side only: troubleshooting_step has no such column; case-level links live in case_source."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tier": {
+                "const": 3
+              }
+            },
+            "required": [
+              "tier"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supervisor_approval_required": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "failure_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taxonomy_code",
+        "failure_mode_id",
+        "mapping_status"
+      ],
+      "properties": {
+        "taxonomy_code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]+\\.[A-Z]+(\\.[A-Z]+)?$",
+          "description": "failure_mode_taxonomy.taxonomy_code, e.g. PUMP.BRNG.ROLL. null = unresolved (see unresolved register); never guessed."
+        },
+        "failure_mode_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^FM-[0-9]{3}$",
+          "description": "failure_mode_vocabulary.failure_mode_id (project-local, not an ISO 14224 code)."
+        },
+        "mapping_status": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Workbook mapping note, e.g. 'MAPPED - cross-link provisional'."
+        },
+        "review_note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Free-text reviewer note."
+        }
+      }
+    },
+    "source_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^S[0-9]{2,}$",
+          "description": "source_reference.source_id"
+        },
+        "relation_note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "How the source relates to the case."
+        },
+        "evidence_role": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Role of the source as evidence."
+        }
+      }
+    },
+    "spare_part_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "part_name"
+      ],
+      "properties": {
+        "part_name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "spare_part_reference.part_name (case-specific join key together with the case)"
+        },
+        "usage_note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Usage note"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overall_decision"
+      ],
+      "description": "Mirrors case_verification. A blank reviewer/date with PENDING is NOT approval.",
+      "properties": {
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Named reviewer. Required for approval."
+        },
+        "review_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "ISO date. Required for approval."
+        },
+        "technical_accuracy_status": {
+          "type": "string",
+          "default": "PENDING"
+        },
+        "taxonomy_mapping_status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_verification_status": {
+          "type": "string",
+          "default": "PENDING"
+        },
+        "safety_review_status": {
+          "type": "string",
+          "default": "PENDING"
+        },
+        "measurement_validation_status": {
+          "type": "string",
+          "default": "PENDING"
+        },
+        "overall_decision": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "APPROVED",
+            "APPROVED WITH CHANGES",
+            "REJECTED"
+          ]
+        },
+        "comments": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Reviewer comments"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "overall_decision": {
+                "enum": [
+                  "APPROVED",
+                  "APPROVED WITH CHANGES"
+                ]
+              }
+            },
+            "required": [
+              "overall_decision"
+            ]
+          },
+          "then": {
+            "required": [
+              "reviewer",
+              "review_date"
+            ],
+            "properties": {
+              "reviewer": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "review_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "JSON-side provenance; not stored in operational_case.",
+      "properties": {
+        "exported_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Package/file the record came from."
+        },
+        "source_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Assumptions a reader must know (e.g. 'values illustrative')."
+        },
+        "unresolved_items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Open items for this case (IDs from UNRESOLVED_ITEMS)."
+        }
+      }
+    }
+  }
+}

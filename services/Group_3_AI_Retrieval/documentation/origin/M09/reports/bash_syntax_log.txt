@@ -1,0 +1,3 @@
+bash -n migrate.sh: OK
+bash -n seed.sh: OK
+bash -n load_all_m09.sh: OK

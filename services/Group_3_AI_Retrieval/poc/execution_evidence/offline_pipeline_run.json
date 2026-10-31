@@ -1,0 +1,214 @@
+{
+  "executed_at_utc": "2026-10-30T11:25:36+00:00",
+  "environment": {
+    "python": "3.13.18",
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+    "database": "NONE (in-memory MOCK repository)",
+    "embedding_backend": "TEST-ONLY hashing vectors, dimension 256 (NOT multilingual-e5-small)",
+    "pgvector_executed": false,
+    "model_inference_executed": false
+  },
+  "dataset": "synthetic_dataset/synthetic_cases.json",
+  "counts": {
+    "cases_loaded": 50,
+    "prepared": 50,
+    "rejected": 0,
+    "skipped_no_text": 0,
+    "validation_warnings": 33
+  },
+  "ingestion": {
+    "trusted_only": {
+      "selected": 0,
+      "embedded": 0
+    },
+    "demo_run_1": {
+      "selected": 50,
+      "embedded": 50
+    },
+    "demo_run_2": {
+      "selected": 50,
+      "embedded": 50
+    },
+    "vectors_after_run_1": 50,
+    "vectors_after_run_2": 50,
+    "duplicate_vectors_created": 0
+  },
+  "vector_dimensions_stored": [
+    256
+  ],
+  "identity_drift": [],
+  "searches": [
+    {
+      "query": "bearing garam hai aur ghurr-ghurr awaaz aa rahi hai",
+      "class_filter": null,
+      "trusted_mode_status": "NO_RESULTS",
+      "trusted_mode_results": 0,
+      "demo_mode_status": "OK",
+      "demo_top3": [
+        {
+          "rank": 1,
+          "case_reference": "CASE-MOT-002",
+          "equipment_class_id": "EQ-MOTOR",
+          "subsystem": "Bearing Assembly",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Hot rear bearing with growling noise; recent excess/incompatible grease; grease extruding.",
+          "similarity_MOCK": 0.445099,
+          "details_withheld": true
+        },
+        {
+          "rank": 2,
+          "case_reference": "CASE-PUMP-007",
+          "equipment_class_id": "EQ-PUMP",
+          "subsystem": "Bearing Assembly",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Elevated bearing-housing/casing temperature, increased noise; low and dark oil in sight glass; flow normal.",
+          "similarity_MOCK": 0.424641,
+          "details_withheld": true
+        },
+        {
+          "rank": 3,
+          "case_reference": "CASE-MOT-006",
+          "equipment_class_id": "EQ-MOTOR",
+          "subsystem": "Bearing Assembly",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "DE bearing hot; hardened dark grease; overdue relubrication; worse in hot weather; squeal.",
+          "similarity_MOCK": 0.406378,
+          "details_withheld": true
+        }
+      ],
+      "notice": "These are similar HISTORICAL cases, not a diagnosis. Similarity does not show that the cause or action is the same for your equipment. Any action needs supervisor approval and your site's safety procedures (isolation / LOTO) before work."
+    },
+    {
+      "query": "seal se paani leak ho raha hai pump chalu karne ke baad",
+      "class_filter": "EQ-PUMP",
+      "trusted_mode_status": "NO_RESULTS",
+      "trusted_mode_results": 0,
+      "demo_mode_status": "OK",
+      "demo_top3": [
+        {
+          "rank": 1,
+          "case_reference": "CASE-PUMP-002",
+          "equipment_class_id": "EQ-PUMP",
+          "subsystem": "Mechanical Seal",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Leakage at seal/gland area, drip rate increasing; history of start-up/dry-run event; pressure slightly reduced",
+          "similarity_MOCK": 0.472984,
+          "details_withheld": true
+        },
+        {
+          "rank": 2,
+          "case_reference": "CASE-PUMP-006",
+          "equipment_class_id": "EQ-PUMP",
+          "subsystem": "Mechanical Seal",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Steady seepage at seal that continues at standstill; recent fluid chemistry/temperature change; no abnormal vi",
+          "similarity_MOCK": 0.46225,
+          "details_withheld": true
+        },
+        {
+          "rank": 3,
+          "case_reference": "CASE-PUMP-004",
+          "equipment_class_id": "EQ-PUMP",
+          "subsystem": "Suction Line",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Gradual loss of discharge pressure and flow; high suction vacuum; intermittent crackling noise.",
+          "similarity_MOCK": 0.420084,
+          "details_withheld": true
+        }
+      ],
+      "notice": "These are similar HISTORICAL cases, not a diagnosis. Similarity does not show that the cause or action is the same for your equipment. Any action needs supervisor approval and your site's safety procedures (isolation / LOTO) before work."
+    },
+    {
+      "query": "motor start hote hi trip ho jata hai aur jalne ki smell aa rahi hai",
+      "class_filter": "EQ-MOTOR",
+      "trusted_mode_status": "NO_RESULTS",
+      "trusted_mode_results": 0,
+      "demo_mode_status": "OK",
+      "demo_top3": [
+        {
+          "rank": 1,
+          "case_reference": "CASE-MOT-001",
+          "equipment_class_id": "EQ-MOTOR",
+          "subsystem": "Stator & Windings",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Trips within seconds of start; burning smell; history of overheating and moisture; overcurrent/earth fault ind",
+          "similarity_MOCK": 0.508146,
+          "details_withheld": true
+        },
+        {
+          "rank": 2,
+          "case_reference": "CASE-MOT-010",
+          "equipment_class_id": "EQ-MOTOR",
+          "subsystem": "(unresolved: Variable-frequency drive and motor)",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Speed hunting on VFD; production inconsistency; feedback warnings.",
+          "similarity_MOCK": 0.470871,
+          "details_withheld": true
+        },
+        {
+          "rank": 3,
+          "case_reference": "CASE-MOT-004",
+          "equipment_class_id": "EQ-MOTOR",
+          "subsystem": "(unresolved: Starter circuit and motor supply)",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "No rotation on start; contactor operates then overload trips; recent warm running.",
+          "similarity_MOCK": 0.391997,
+          "details_withheld": true
+        }
+      ],
+      "notice": "These are similar HISTORICAL cases, not a diagnosis. Similarity does not show that the cause or action is the same for your equipment. Any action needs supervisor approval and your site's safety procedures (isolation / LOTO) before work."
+    },
+    {
+      "query": "compressor discharge temperature high shutdown oil cooler dusty",
+      "class_filter": "EQ-COMP",
+      "trusted_mode_status": "NO_RESULTS",
+      "trusted_mode_results": 0,
+      "demo_mode_status": "OK",
+      "demo_top3": [
+        {
+          "rank": 1,
+          "case_reference": "CASE-COMP-003",
+          "equipment_class_id": "EQ-COMP",
+          "subsystem": "Cooling System",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "High temperature despite clean fins; hot oil; dark oil; internal sludge suspected.",
+          "similarity_MOCK": 0.597614,
+          "details_withheld": true
+        },
+        {
+          "rank": 2,
+          "case_reference": "CASE-COMP-002",
+          "equipment_class_id": "EQ-COMP",
+          "subsystem": "Cooling System",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "High-temp shutdown; hot discharge air; dusty cooler fins; blocked louvre; worse in summer.",
+          "similarity_MOCK": 0.501965,
+          "details_withheld": true
+        },
+        {
+          "rank": 3,
+          "case_reference": "CASE-COMP-014",
+          "equipment_class_id": "EQ-COMP",
+          "subsystem": "Oil System",
+          "case_status": "DRAFT",
+          "evidence_level": "DEMO_UNVERIFIED",
+          "summary": "Oil temperature erratic; cooler ok.",
+          "similarity_MOCK": 0.478714,
+          "details_withheld": true
+        }
+      ],
+      "notice": "These are similar HISTORICAL cases, not a diagnosis. Similarity does not show that the cause or action is the same for your equipment. Any action needs supervisor approval and your site's safety procedures (isolation / LOTO) before work."
+    }
+  ]
+}

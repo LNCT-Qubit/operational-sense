@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/claude/work/Group_3_AI_Retrieval
+plugins: platformdirs-4.13.0, anyio-4.15.1
+collecting ... collected 15 items
+
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_failing_migration_stops_subsequent_steps PASSED [  6%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_failing_password_step_is_fatal PASSED [ 13%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_failing_seed_stops_later_seeds_and_verify PASSED [ 20%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_password_guards PASSED [ 26%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_success_path_exit_zero_and_runs_everything PASSED [ 33%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_verify_error_line_with_psql_exit_zero_is_nonzero PASSED [ 40%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_verify_fail_line_is_nonzero PASSED [ 46%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_verify_psql_failure_is_nonzero_even_if_pipeline_would_end_ok PASSED [ 53%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_verify_success PASSED [ 60%]
+tests/test_local_pg_failure_handling.py::TestFailFastOffline::test_verify_without_any_pass_is_nonzero PASSED [ 66%]
+tests/test_local_pg_failure_handling.py::TestScriptSource::test_no_error_suppression PASSED [ 73%]
+tests/test_local_pg_failure_handling.py::TestScriptSource::test_strict_flags PASSED [ 80%]
+tests/test_local_pg_failure_handling.py::TestLiveFailingSql::test_failing_sql_exits_nonzero_and_stops PASSED [ 86%]
+tests/test_local_pg_failure_handling.py::TestLiveFailingSql::test_success_exits_zero PASSED [ 93%]
+tests/test_local_pg_failure_handling.py::TestLiveFailingSql::test_syntax_error_exits_nonzero PASSED [100%]
+
+============================== 15 passed in 0.67s ==============================
