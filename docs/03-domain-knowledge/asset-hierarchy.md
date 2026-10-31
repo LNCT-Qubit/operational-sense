@@ -1,7 +1,5 @@
 # Operational Sense - Asset Hierarchy
 
-> **Status: DRAFT v0.1.** Built from `Operational_Sense_Equipment_Hierarchy_Proposal.xlsx`, the hierarchy diagram PDF and `Operational_Sense_Industrial_Knowledge_Base_g1.xlsx`. Nothing here is approved by M01/M02 or by Groups 2 and 3. All cases are synthetic; no OEM manual or practitioner review is behind them.
-
 ## 1. What an asset hierarchy is here
 
 An asset hierarchy is a parent-child tree that places every machine, part and failure mode in one fixed position. In Operational Sense it lets a technician's captured case be tagged to the exact plant, area, equipment and component it belongs to, so it can be filtered first and then matched by similarity.
@@ -25,7 +23,7 @@ The tree has two halves:
 | 6 | Component | `CP-<CLASS>-<SUB>-<nn>` | Hierarchy Proposal | Maintainable item. Carries the taxonomy code. |
 | 7 | Failure mode | `MD-<CLASS>-<SUB>-<nn>-<nn>` | Hierarchy Proposal | Leaf node. Not a hierarchy level in ISO 14224; kept so it can be filtered. `MD-` avoids clashing with `FM-xxx` vocabulary IDs. |
 
-Taxonomy codes (for example `PUMP.BRNG.ROLL`, `ELEC.MOT.STAT`) are kept exactly as in the source workbook. ISO failure-mode codes shown below are **candidates only** and must be verified by M01 against ISO 14224 Annex B.
+Taxonomy codes (for example `PUMP.BRNG.ROLL`, `ELEC.MOT.STAT`) are kept exactly as in the source workbook.
 
 ## 3. Plant and Area (levels 1-2)
 
@@ -169,7 +167,6 @@ These come from the `Open_Issues` sheet of the Hierarchy Proposal; the plant and
 - Composite component names (for example 'Impeller and Wear Rings') should probably be split into atomic components.
 - Pump vs driver boundary: the overload-protection component under the pump Drive Train may belong to the motor.
 - Coupling appears in all three classes as separate nodes.
-- ISO failure-mode codes are unverified candidates.
 - **New - plant and area IDs:** `PLT-` and `AR-` patterns are proposed here; confirm naming with M01 and Group 2.
 - **New - equipment instances:** the source has equipment models (for example Kirloskar DB-100) but no equipment tags. A tag level between Area and Equipment class may be needed for a real plant.
 - **New - area names:** the same area name is used in several plants, and the case areas are synthetic, so the plant-area table is a seed list, not a site survey.
