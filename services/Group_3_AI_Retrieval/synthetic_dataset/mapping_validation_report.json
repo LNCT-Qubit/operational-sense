@@ -1,0 +1,880 @@
+{
+  "summary": {
+    "cases": 50,
+    "by_field": {
+      "subsystem": {
+        "RESOLVED": 40,
+        "UNRESOLVED": 10
+      },
+      "component": {
+        "RESOLVED": 39,
+        "UNRESOLVED": 11
+      },
+      "taxonomy": {
+        "RESOLVED": 39,
+        "UNRESOLVED": 11
+      }
+    },
+    "invalid_cases": [],
+    "requires_group1_review_cases": [
+      "CASE-COMP-005",
+      "CASE-COMP-006",
+      "CASE-COMP-007",
+      "CASE-COMP-010",
+      "CASE-COMP-013",
+      "CASE-COMP-015",
+      "CASE-COMP-016",
+      "CASE-MOT-004",
+      "CASE-MOT-007",
+      "CASE-MOT-010",
+      "CASE-MOT-012",
+      "CASE-MOT-014",
+      "CASE-MOT-015",
+      "CASE-MOT-016",
+      "CASE-MOT-017",
+      "CASE-PUMP-006",
+      "CASE-PUMP-010",
+      "CASE-PUMP-011",
+      "CASE-PUMP-012",
+      "CASE-PUMP-013",
+      "CASE-PUMP-014",
+      "CASE-PUMP-015",
+      "CASE-PUMP-016",
+      "CASE-PUMP-017"
+    ],
+    "fully_resolved_cases": [
+      "CASE-COMP-001",
+      "CASE-COMP-002",
+      "CASE-COMP-003",
+      "CASE-COMP-004",
+      "CASE-COMP-008",
+      "CASE-COMP-009",
+      "CASE-COMP-011",
+      "CASE-COMP-012",
+      "CASE-COMP-014",
+      "CASE-MOT-001",
+      "CASE-MOT-002",
+      "CASE-MOT-003",
+      "CASE-MOT-005",
+      "CASE-MOT-006",
+      "CASE-MOT-008",
+      "CASE-MOT-009",
+      "CASE-MOT-011",
+      "CASE-MOT-013",
+      "CASE-PUMP-001",
+      "CASE-PUMP-002",
+      "CASE-PUMP-003",
+      "CASE-PUMP-004",
+      "CASE-PUMP-005",
+      "CASE-PUMP-007",
+      "CASE-PUMP-008",
+      "CASE-PUMP-009"
+    ]
+  },
+  "cases": [
+    {
+      "case_reference": "CASE-COMP-001",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-002",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-003",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-004",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-005",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "COMP.OSEP.ELEM: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-006",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "Label 'Pressure control system' could be 'Capacity Control' (id 14) but the label also covers set-point/differential logic that the approved list does not name; not an exact or unique match.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-020); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-007",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "Compound label ('Drive assembly and compressor element'); EQ-COMP has no drive-train or mounting subsystem in the approved list.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-012); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-008",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-009",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-010",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Drive coupling and motor': EQ-COMP has no drive-train subsystem. 'Drive Train' exists only for EQ-PUMP; cross-class use would violate fk_case_class_subsystem.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-002); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-011",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-012",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-013",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "COMP.AEND.ROTR: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-014",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-COMP-015",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "COMP.VALV.SOL: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-COMP-016",
+      "equipment_class_id": "EQ-COMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Controls and Instrumentation' is not an approved EQ-COMP subsystem and no M06 component or taxonomy code covers sensors/controllers.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-020); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-001",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-002",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-003",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-004",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Starter circuit and motor supply': nearest approved subsystem is 'Power Supply' but its M06 component is 'Supply Phase Conductors, Fuses and Contactor'; the case is about an overload relay, which is not listed. Ambiguous.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-037); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-005",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-006",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-007",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Motor and overload protection': compound label; no overload/protection subsystem or taxonomy code exists for EQ-MOTOR.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-047); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-008",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-009",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-010",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Variable-frequency drive and motor': no drive/VFD subsystem or taxonomy code exists for EQ-MOTOR.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-041); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-011",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-012",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "ELEC.MOT.COOL: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-013",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-MOT-014",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "ELEC.MOT.AGAP: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-015",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "ELEC.MOT.ROTR: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-016",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "ELEC.MOT.BRDC: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-MOT-017",
+      "equipment_class_id": "EQ-MOTOR",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Coupling': EQ-MOTOR has no coupling subsystem ('Drive Train / Flexible Coupling' exists only for EQ-PUMP; cross-class use is invalid).",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-036); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-001",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-002",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-003",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-004",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-005",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-006",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.SEAL.FACE: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-007",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-008",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-009",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": []
+    },
+    {
+      "case_reference": "CASE-PUMP-010",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "resolved by curated rule; confirmation pending",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-050); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-011",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Impeller and drive assembly' spans two approved subsystems (Hydraulic End and Drive Train); not unique.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-017); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-012",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "UNRESOLVED",
+        "component": "UNRESOLVED",
+        "taxonomy": "UNRESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "subsystem",
+          "'Motor protection and pump system': compound label; no motor-protection subsystem exists for EQ-PUMP.",
+          "Group 1 (domain)"
+        ],
+        [
+          "component",
+          "component not identified in source; not inferred",
+          "Group 1 (domain)"
+        ],
+        [
+          "taxonomy_code",
+          "no code in approved taxonomy for this case (failure_mode_id=FM-048); none invented",
+          "Group 1 (domain)"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-013",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.HYDR.WEAR: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-014",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.DRVT.CPLG: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-015",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.HYDR.RECR: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-016",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.SUCT.PRIM: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    },
+    {
+      "case_reference": "CASE-PUMP-017",
+      "equipment_class_id": "EQ-PUMP",
+      "fields": {
+        "subsystem": "RESOLVED",
+        "component": "RESOLVED",
+        "taxonomy": "RESOLVED"
+      },
+      "invalid": [],
+      "review": [
+        [
+          "taxonomy_code",
+          "PUMP.SHFT.SHAF: workbook marks cross-link AMBIGUOUS",
+          "Group 1 + industrial expert"
+        ]
+      ]
+    }
+  ]
+}

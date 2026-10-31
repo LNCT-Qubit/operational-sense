@@ -1,0 +1,19 @@
+PASS DB rejects a mock-named model (chk_embedding_not_mock) ERROR:  new row for relation "historical_case" violates check constraint "chk_embedding_not_mock"
+PASS DB rejects a 256-d vector in vector(384) ERROR:  expected 384 dimensions, not 256
+PASS DB accepts a correctly-labelled 384-d vector (sanity) None
+PASS column dimension read from database 
+PASS mock vectors refused by PostgresRepository (MockEmbeddingError) 
+PASS trusted-only ingestion embeds 0 (all cases synthetic DRAFT) selected=0
+PASS demo ingestion embeds 50 cases embedded=50 rows=50
+PASS repeated ingestion creates no duplicates rows after 2nd run=50
+PASS provenance stored per row ('fake-hashing-384', '384', 'symptom-side-v2')
+PASS search with a different model ranks nothing from the old model 
+PASS model change: all rows detected stale and re-embedded stale_replaced=50
+PASS TRUSTED mode returns 0 (no expert-approved cases exist) status=NO_RESULTS
+PASS DEMO mode returns top 3 labelled DEMO_UNVERIFIED 
+PASS class filter applied in SQL 
+PASS subsystem filter applied: only subsystem 1 (Hydraulic End) rows; CASE-PUMP-010 included after curation [('CASE-PUMP-010', '1'), ('CASE-PUMP-005', '1'), ('CASE-PUMP-013', '1')]
+PASS taxonomy filter applied 
+PASS original case references preserved 
+PASS RLS: another tenant context sees no vectors/cases via repository search 
+PASS transaction rolled back (database unchanged) historical_case rows=0

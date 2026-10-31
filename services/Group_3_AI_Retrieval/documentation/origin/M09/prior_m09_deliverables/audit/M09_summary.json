@@ -1,0 +1,17 @@
+{
+  "cases": 50,
+  "pump_cases": 17,
+  "motor_cases": 17,
+  "compressor_cases": 16,
+  "steps": 350,
+  "tier1_steps": 150,
+  "tier2_steps": 150,
+  "tier3_steps": 50,
+  "cases_missing_component": 11,
+  "cases_needing_depth_expansion": 15,
+  "cases_with_acceptance_source_placeholder": 50,
+  "generic_measurement_point_steps": 141,
+  "subsystem_fk_resolved_by_import_sql": 0,
+  "trusted_cases_eligible_by_import_sql": 0,
+  "method": "Static audit of source SQL/JSON only; no live database/model/domain-expert run."
+}

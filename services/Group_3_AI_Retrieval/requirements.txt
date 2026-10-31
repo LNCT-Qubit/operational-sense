@@ -1,0 +1,5 @@
+# Runtime (live database + model). Offline tests need NONE of these (standard library only).
+psycopg[binary]>=3.1,<4
+python-dotenv>=1.0,<2
+pgvector>=0.3,<1
+sentence-transformers>=2.7,<4

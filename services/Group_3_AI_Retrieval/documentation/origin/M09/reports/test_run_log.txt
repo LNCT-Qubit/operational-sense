@@ -1,0 +1,59 @@
+# command: python -m unittest discover -s tests -t . -v   (Python 3.12.3, 2026-10-29)
+test_case_references_unique_and_classes (tests.test_data_quality.DataQuality.test_case_references_unique_and_classes) ... ok
+test_counts_50_cases_350_steps (tests.test_data_quality.DataQuality.test_counts_50_cases_350_steps) ... ok
+test_each_case_has_seven_ordered_steps_tier_pattern (tests.test_data_quality.DataQuality.test_each_case_has_seven_ordered_steps_tier_pattern) ... ok
+test_every_case_model_defined (tests.test_data_quality.DataQuality.test_every_case_model_defined) ... ok
+test_known_open_gap_component_blank_is_reported_not_hidden (tests.test_data_quality.DataQuality.test_known_open_gap_component_blank_is_reported_not_hidden) ... ok
+test_lifecycle_defaults_in_import (tests.test_data_quality.DataQuality.test_lifecycle_defaults_in_import) ... ok
+test_no_exact_or_same_class_near_duplicates (tests.test_data_quality.DataQuality.test_no_exact_or_same_class_near_duplicates) ... ok
+test_placeholder_acceptance_criteria_is_reported (tests.test_data_quality.DataQuality.test_placeholder_acceptance_criteria_is_reported) ... ok
+test_subsystem_resolution_is_39_and_11 (tests.test_data_quality.DataQuality.test_subsystem_resolution_is_39_and_11) ... ok
+test_taxonomy_vocab_sources_consistent (tests.test_data_quality.DataQuality.test_taxonomy_vocab_sources_consistent) ... ok
+test_tier3_requires_supervisor_and_loto (tests.test_data_quality.DataQuality.test_tier3_requires_supervisor_and_loto) ... ok
+test_all_50_documents_build_and_ids_stable_unique (tests.test_lifecycle_and_retrieval_prep.Documents.test_all_50_documents_build_and_ids_stable_unique) ... ok
+test_deterministic (tests.test_lifecycle_and_retrieval_prep.Documents.test_deterministic) ... ok
+test_document_labelled_synthetic_and_not_diagnosis (tests.test_lifecycle_and_retrieval_prep.Documents.test_document_labelled_synthetic_and_not_diagnosis) ... ok
+test_missing_component_is_flagged_not_invented (tests.test_lifecycle_and_retrieval_prep.Documents.test_missing_component_is_flagged_not_invented) ... ok
+test_tier3_work_not_in_embedding_text (tests.test_lifecycle_and_retrieval_prep.Documents.test_tier3_work_not_in_embedding_text) ... ok
+test_demo_requires_explicit_opt_in (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_demo_requires_explicit_opt_in) ... ok
+test_draft_cannot_enter_trusted_even_if_flagged_eligible (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_draft_cannot_enter_trusted_even_if_flagged_eligible) ... ok
+test_every_imported_case_is_excluded_from_trusted_retrieval (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_every_imported_case_is_excluded_from_trusted_retrieval) ... ok
+test_missing_metadata_fails_closed (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_missing_metadata_fails_closed) ... ok
+test_non_synthetic_demo_row_not_served_through_demo_path (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_non_synthetic_demo_row_not_served_through_demo_path) ... ok
+test_only_verified_and_eligible_is_trusted (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_only_verified_and_eligible_is_trusted) ... ok
+test_rejected_and_revoked_never_retrievable (tests.test_lifecycle_and_retrieval_prep.Eligibility.test_rejected_and_revoked_never_retrievable) ... ok
+test_class_filter (tests.test_lifecycle_and_retrieval_prep.Filters.test_class_filter) ... ok
+test_null_subsystem_never_matches_a_subsystem_filter (tests.test_lifecycle_and_retrieval_prep.Filters.test_null_subsystem_never_matches_a_subsystem_filter) ... ok
+test_empty_results_message_is_safe (tests.test_lifecycle_and_retrieval_prep.Output.test_empty_results_message_is_safe) ... ok
+test_results_say_similarity_not_diagnosis_and_trace_to_case (tests.test_lifecycle_and_retrieval_prep.Output.test_results_say_similarity_not_diagnosis_and_trace_to_case) ... ok
+test_catches_problems (tests.test_metrics.EvalDataset.test_catches_problems) ... ok
+test_class_mismatch (tests.test_metrics.EvalDataset.test_class_mismatch) ... ok
+test_empty_dataset (tests.test_metrics.EvalDataset.test_empty_dataset) ... ok
+test_valid (tests.test_metrics.EvalDataset.test_valid) ... ok
+test_means (tests.test_metrics.Metrics.test_means) ... ok
+test_recall_at_3 (tests.test_metrics.Metrics.test_recall_at_3) ... ok
+test_recall_undefined_without_labels (tests.test_metrics.Metrics.test_recall_undefined_without_labels) ... ok
+test_reciprocal_rank (tests.test_metrics.Metrics.test_reciprocal_rank) ... ok
+test_relative_improvement_edges (tests.test_metrics.Metrics.test_relative_improvement_edges) ... ok
+test_R10_no_secrets_in_package (tests.test_regressions.Regressions.test_R10_no_secrets_in_package) ... ok
+test_R1_org_row_is_created_before_anything_needs_it (tests.test_regressions.Regressions.test_R1_org_row_is_created_before_anything_needs_it) ... ok
+test_R2_asset_seed_has_no_hard_coded_model_uuids (tests.test_regressions.Regressions.test_R2_asset_seed_has_no_hard_coded_model_uuids) ... ok
+test_R3_asset_seed_models_match_case_import_models (tests.test_regressions.Regressions.test_R3_asset_seed_models_match_case_import_models) ... ok
+test_R4_no_placeholder_spare_parts_or_links (tests.test_regressions.Regressions.test_R4_no_placeholder_spare_parts_or_links) ... ok
+test_R5_spare_join_is_case_specific_in_both_places (tests.test_regressions.Regressions.test_R5_spare_join_is_case_specific_in_both_places) ... ok
+test_R6_validation_script_expects_draft_not_submitted (tests.test_regressions.Regressions.test_R6_validation_script_expects_draft_not_submitted) ... ok
+test_R7_stale_loader_is_marked_do_not_run (tests.test_regressions.Regressions.test_R7_stale_loader_is_marked_do_not_run) ... ok
+test_R8_subsystem_fix_never_changes_status_or_eligibility (tests.test_regressions.Regressions.test_R8_subsystem_fix_never_changes_status_or_eligibility) ... ok
+test_R9_guards_do_not_weaken_security (tests.test_regressions.Regressions.test_R9_guards_do_not_weaken_security) ... ok
+test_fixed_join_gives_98_case_specific_links (tests.test_sql_logic.SpareJoinLogic.test_fixed_join_gives_98_case_specific_links) ... ok
+test_original_name_only_join_fans_out (tests.test_sql_logic.SpareJoinLogic.test_original_name_only_join_fans_out) ... ok
+test_load_all_references_only_existing_files_in_fk_order (tests.test_sql_logic.StaticChecks.test_load_all_references_only_existing_files_in_fk_order) ... ok
+test_migrations_unchanged_001_to_007 (tests.test_sql_logic.StaticChecks.test_migrations_unchanged_001_to_007) ... ok
+test_shell_scripts_pass_bash_n (tests.test_sql_logic.StaticChecks.test_shell_scripts_pass_bash_n) ... ok
+test_sql_quotes_balanced_and_transactions_paired (tests.test_sql_logic.StaticChecks.test_sql_quotes_balanced_and_transactions_paired) ... ok
+test_update_resolves_39_and_leaves_11_null (tests.test_sql_logic.SubsystemFkLogic.test_update_resolves_39_and_leaves_11_null) ... ok
+
+----------------------------------------------------------------------
+Ran 53 tests in 0.378s
+
+OK

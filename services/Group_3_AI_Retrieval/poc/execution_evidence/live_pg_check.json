@@ -1,0 +1,119 @@
+{
+  "checks": [
+    {
+      "check": "DB rejects a mock-named model (chk_embedding_not_mock)",
+      "result": "PASS",
+      "detail": "ERROR:  new row for relation \"historical_case\" violates check constraint \"chk_embedding_not_mock\""
+    },
+    {
+      "check": "DB rejects a 256-d vector in vector(384)",
+      "result": "PASS",
+      "detail": "ERROR:  expected 384 dimensions, not 256"
+    },
+    {
+      "check": "DB accepts a correctly-labelled 384-d vector (sanity)",
+      "result": "PASS",
+      "detail": "None"
+    },
+    {
+      "check": "column dimension read from database",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "mock vectors refused by PostgresRepository (MockEmbeddingError)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "trusted-only ingestion embeds 0 (all cases synthetic DRAFT)",
+      "result": "PASS",
+      "detail": "selected=0"
+    },
+    {
+      "check": "demo ingestion embeds 50 cases",
+      "result": "PASS",
+      "detail": "embedded=50 rows=50"
+    },
+    {
+      "check": "repeated ingestion creates no duplicates",
+      "result": "PASS",
+      "detail": "rows after 2nd run=50"
+    },
+    {
+      "check": "provenance stored per row",
+      "result": "PASS",
+      "detail": "('fake-hashing-384', '384', 'symptom-side-v2')"
+    },
+    {
+      "check": "search with a different model ranks nothing from the old model",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "model change: all rows detected stale and re-embedded",
+      "result": "PASS",
+      "detail": "stale_replaced=50"
+    },
+    {
+      "check": "TRUSTED mode returns 0 (no expert-approved cases exist)",
+      "result": "PASS",
+      "detail": "status=NO_RESULTS"
+    },
+    {
+      "check": "DEMO mode returns top 3 labelled DEMO_UNVERIFIED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "class filter applied in SQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "subsystem filter applied: only subsystem 1 (Hydraulic End) rows; CASE-PUMP-010 included after curation",
+      "result": "PASS",
+      "detail": "[('CASE-PUMP-010', '1'), ('CASE-PUMP-005', '1'), ('CASE-PUMP-013', '1')]"
+    },
+    {
+      "check": "taxonomy filter applied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "original case references preserved",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "RLS: another tenant context sees no vectors/cases via repository search",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "transaction rolled back (database unchanged)",
+      "result": "PASS",
+      "detail": "historical_case rows=0"
+    }
+  ],
+  "server": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+  "pgvector": "0.8.0",
+  "demo_top3_MOCK_VECTORS_NOT_MEANINGFUL": [
+    [
+      1,
+      "CASE-MOT-002",
+      0.399044
+    ],
+    [
+      2,
+      "CASE-MOT-006",
+      0.387585
+    ],
+    [
+      3,
+      "CASE-PUMP-001",
+      0.374464
+    ]
+  ],
+  "all_pass": true
+}
