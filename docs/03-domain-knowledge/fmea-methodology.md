@@ -117,7 +117,6 @@ Change a row to *Verified* only after the check. Until then, downstream artefact
 
 ## 7. Limitations
 
-- Content is assumption-based and unverified (see §5).
 - Occurrence and detection depend on site context; generic scores would be misleading.
 - ISO 14224 is written for the petroleum, petrochemical and natural gas industries; applying it to general manufacturing assets is a **project extension** (see mapping document).
 - The scoring scale has not been approved.
