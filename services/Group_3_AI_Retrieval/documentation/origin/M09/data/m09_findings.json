@@ -1,0 +1,184 @@
+[
+  {
+    "id": "Q01",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Case count",
+    "detail": "50 cases (expected 50)"
+  },
+  {
+    "id": "Q02",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Step count",
+    "detail": "350 steps (expected 350)"
+  },
+  {
+    "id": "Q03",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Unique case references",
+    "detail": "duplicates: []"
+  },
+  {
+    "id": "Q04",
+    "severity": "Medium",
+    "status": "PASS",
+    "title": "Cases per equipment class",
+    "detail": "{'EQ-PUMP': 17, 'EQ-MOTOR': 17, 'EQ-COMP': 16}"
+  },
+  {
+    "id": "Q05",
+    "severity": "Medium",
+    "status": "FAIL",
+    "title": "Required case fields populated",
+    "detail": "component_name blank in 11 cases"
+  },
+  {
+    "id": "Q06",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Every case model exists in the model list",
+    "detail": "missing: []; 19 models defined, all illustrative"
+  },
+  {
+    "id": "Q07",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Steps link to cases, numbered 1..7",
+    "detail": "orphans=0, bad numbering=[], cases without steps=[]"
+  },
+  {
+    "id": "Q08",
+    "severity": "Medium",
+    "status": "PASS",
+    "title": "Tier pattern 1,1,1,2,2,2,3",
+    "detail": "violations: []"
+  },
+  {
+    "id": "Q09",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Every Tier-3 step requires supervisor approval",
+    "detail": "violations: 0"
+  },
+  {
+    "id": "Q10",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Tier-3 steps mention LOTO / lock-out",
+    "detail": "without: 0"
+  },
+  {
+    "id": "Q11",
+    "severity": "Low",
+    "status": "PASS",
+    "title": "step_reference matches case and step number",
+    "detail": "violations: 0"
+  },
+  {
+    "id": "Q12",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Taxonomy / vocabulary references consistent",
+    "detail": "cases w/o mapping seed=[], mismatches=[], unknown FM ids=[]"
+  },
+  {
+    "id": "Q13",
+    "severity": "Medium",
+    "status": "WARN",
+    "title": "Cases without a taxonomy code (known FMEA gaps)",
+    "detail": "11 cases: CASE-PUMP-010, CASE-PUMP-011, CASE-PUMP-012, CASE-MOT-004, CASE-MOT-007, CASE-MOT-010, CASE-MOT-017, CASE-COMP-006, CASE-COMP-007, CASE-COMP-010, CASE-COMP-016"
+  },
+  {
+    "id": "Q14",
+    "severity": "Medium",
+    "status": "PASS",
+    "title": "Source ids referenced exist",
+    "detail": "unknown: []"
+  },
+  {
+    "id": "Q15",
+    "severity": "High",
+    "status": "PASS",
+    "title": "A mechanism exists that sets operational_case.subsystem_id",
+    "detail": "Step 4.5 sets subsystem_id: False; m09_010 fix file present: True. Label matches approved subsystem for 39 cases; 11 unresolved (CASE-PUMP-010, CASE-PUMP-011, CASE-PUMP-012, CASE-MOT-004, CASE-MOT-007, CASE-MOT-010, CASE-MOT-017, CASE-COMP-006, CASE-COMP-007, CASE-COMP-010, CASE-COMP-016)"
+  },
+  {
+    "id": "Q16",
+    "severity": "Medium",
+    "status": "WARN",
+    "title": "Cases whose subsystem label is not in the approved list",
+    "detail": "11 cases need a Group 1 mapping decision"
+  },
+  {
+    "id": "Q17",
+    "severity": "Medium",
+    "status": "WARN",
+    "title": "Acceptance criteria are case-specific",
+    "detail": "1 distinct value(s) over 50 cases; value says the OEM/site source is 'not stated' (placeholder, not a limit)"
+  },
+  {
+    "id": "Q18",
+    "severity": "Medium",
+    "status": "WARN",
+    "title": "Steps with generic measurement-point wording",
+    "detail": "141 of 350 steps"
+  },
+  {
+    "id": "Q19",
+    "severity": "Low",
+    "status": "INFO",
+    "title": "Cases flagged needs_depth_expansion",
+    "detail": "15: CASE-MOT-011, CASE-MOT-012, CASE-MOT-015, CASE-COMP-002, CASE-COMP-004, CASE-COMP-006, CASE-COMP-007, CASE-COMP-009, CASE-COMP-010, CASE-COMP-011, CASE-COMP-012, CASE-COMP-013, CASE-COMP-014, CASE-COMP-015, CASE-COMP-016"
+  },
+  {
+    "id": "Q20",
+    "severity": "Medium",
+    "status": "PASS",
+    "title": "No exact / near-duplicate cases within a class (Jaccard >= 0.6)",
+    "detail": "exact duplicate symptom texts=0; same-class near-dups=[]; cross-class pairs>=0.6 (informational)=[]"
+  },
+  {
+    "id": "Q21",
+    "severity": "High",
+    "status": "PASS",
+    "title": "No placeholder text loaded as a spare part",
+    "detail": "spare rows=[], links=[]"
+  },
+  {
+    "id": "Q22",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Each spare link resolves to exactly one spare row (case-specific join)",
+    "detail": "links=98, not-exactly-one=[]; original name-only join would create 119 rows"
+  },
+  {
+    "id": "Q23",
+    "severity": "Medium",
+    "status": "WARN",
+    "title": "Safety procedures are class-specific",
+    "detail": "14 safety rows, all general (class NULL): every case links to all 14 (700 links)"
+  },
+  {
+    "id": "Q24",
+    "severity": "High",
+    "status": "PASS",
+    "title": "Import keeps all cases DRAFT + demo_only_until_expert_review (+ synthetic)",
+    "detail": "import defaults: {'case_status': 'DRAFT', 'retrieval_eligibility': 'demo_only_until_expert_review'}; model/synthetic flags hard-coded TRUE in the import SELECT"
+  },
+  {
+    "id": "Q25",
+    "severity": "Info",
+    "status": "INFO",
+    "title": "All 50 cases state illustrative operating context / no recorded readings",
+    "detail": "50 of 50"
+  },
+  {
+    "id": "Q26",
+    "severity": "Info",
+    "status": "INFO",
+    "title": "Scope of contradiction checking",
+    "detail": "Only structural contradictions are tested (class/subsystem/component vs taxonomy, tier vs approval, status vs eligibility). Semantic symptom/cause/measurement contradictions need expert review."
+  }
+]

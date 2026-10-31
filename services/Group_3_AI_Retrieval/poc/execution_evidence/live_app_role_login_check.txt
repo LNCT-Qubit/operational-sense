@@ -1,0 +1,10 @@
+== login as opsense_app with configured password
+opsense_app|f|f
+b2a7dce7-b449-4381-ba3b-b520f2c88c2e
+50
+== login with wrong password (must fail)
+psql: error: connection to server at "127.0.0.1", port 54329 failed: FATAL:  password authentication failed for user "opsense_app"
+== no tenant context (expect 0)
+0
+== password cleared -> login must fail closed
+psql: error: connection to server at "127.0.0.1", port 54329 failed: FATAL:  password authentication failed for user "opsense_app"

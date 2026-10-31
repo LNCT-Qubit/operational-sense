@@ -1,0 +1,115 @@
+
+== Python compilation
+
+== Shell syntax
+ok
+
+== JSON parsing
+ok
+
+== JSON Schema (canonical, valid + invalid samples)
+----------------------------------------------------------------------
+Ran 23 tests in 0.151s
+
+OK
+
+== Synthetic dataset validation (schema+semantic+dataset)
+----------------------------------------------------------------------
+Ran 26 tests in 0.809s
+
+OK
+
+== Mapping validation (INVALID must be 0)
+mapping report up to date
+
+== Curation SQL is fresh
+m09_040 up to date
+
+== Embedding-text generation
+----------------------------------------------------------------------
+Ran 20 tests in 0.011s
+
+OK
+
+== Evaluation dataset validation (NOT a benchmark)
+Dataset OK: 17 queries (sha256 ca331cf1b855...)  [dataset VALIDATION only; not a benchmark result]
+
+== Mock integration pipeline
+{
+  "counts": {
+    "cases_loaded": 50,
+    "prepared": 50,
+    "rejected": 0,
+    "skipped_no_text": 0,
+    "validation_warnings": 33
+  },
+  "ingestion": {
+    "trusted_only": {
+      "selected": 0,
+      "embedded": 0
+    },
+    "demo_run_1": {
+      "selected": 50,
+      "embedded": 50
+    },
+    "demo_run_2": {
+      "selected": 50,
+      "embedded": 50
+    },
+    "vectors_after_run_1": 50,
+    "vectors_after_run_2": 50,
+    "duplicate_vectors_created": 0
+  },
+  "vector_dimensions_stored": [
+    256
+  ],
+  "identity_drift": []
+}
+
+Q: bearing garam hai aur ghurr-ghurr awaaz aa rahi hai  [class=None]  trusted=NO_RESULTS  demo=OK
+  #1 CASE-MOT-002   EQ-MOTOR  Bearing Assembly           MOCK-sim=0.445
+  #2 CASE-PUMP-007  EQ-PUMP   Bearing Assembly           MOCK-sim=0.425
+  #3 CASE-MOT-006   EQ-MOTOR  Bearing Assembly           MOCK-sim=0.406
+
+Q: seal se paani leak ho raha hai pump chalu karne ke baad  [class=EQ-PUMP]  trusted=NO_RESULTS  demo=OK
+  #1 CASE-PUMP-002  EQ-PUMP   Mechanical Seal            MOCK-sim=0.473
+  #2 CASE-PUMP-006  EQ-PUMP   Mechanical Seal            MOCK-sim=0.462
+  #3 CASE-PUMP-004  EQ-PUMP   Suction Line               MOCK-sim=0.420
+
+Q: motor start hote hi trip ho jata hai aur jalne ki smell aa rahi hai  [class=EQ-MOTOR]  trusted=NO_RESULTS  demo=OK
+  #1 CASE-MOT-001   EQ-MOTOR  Stator & Windings          MOCK-sim=0.508
+  #2 CASE-MOT-010   EQ-MOTOR  (unresolved: Variable-freq MOCK-sim=0.471
+  #3 CASE-MOT-004   EQ-MOTOR  (unresolved: Starter circu MOCK-sim=0.392
+
+Q: compressor discharge temperature high shutdown oil cooler dusty  [class=EQ-COMP]  trusted=NO_RESULTS  demo=OK
+  #1 CASE-COMP-003  EQ-COMP   Cooling System             MOCK-sim=0.598
+  #2 CASE-COMP-002  EQ-COMP   Cooling System             MOCK-sim=0.502
+  #3 CASE-COMP-014  EQ-COMP   Oil System                 MOCK-sim=0.479
+
+NOTE: mock vectors and in-memory store; no model, no PostgreSQL, no pgvector were used.
+
+== SQL static checks + security
+----------------------------------------------------------------------
+Ran 41 tests in 0.178s
+
+OK
+
+== Full test suite
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+Skipping CASE-A-005: no usable symptom text
+----------------------------------------------------------------------
+Ran 273 tests in 2.783s
+
+OK (skipped=3)
+ALL STATIC CHECKS PASSED

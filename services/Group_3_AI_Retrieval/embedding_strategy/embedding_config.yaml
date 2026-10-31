@@ -1,0 +1,22 @@
+# Embedding configuration (PROVISIONAL: model not yet approved by the team).
+# The running code reads the OPSENSE_EMBEDDING_* variables from .env (see retrieval/embedding_config.py);
+# this file documents the same values and is cross-checked against the code and SQL by tests/test_security_config.py.
+text_builder_version: symptom-side-v2
+model:
+  provider: sentence-transformers
+  name: intfloat/multilingual-e5-small
+  dimension: 384            # must equal historical_case.embedding vector(384) in migration 006
+  query_prefix: "query: "
+  document_prefix: "passage: "
+  normalization: l2         # cosine distance == dot-product ranking
+  status: provisional       # not benchmarked on Hinglish; model facts to be re-checked against the model card
+similarity:
+  operator: "<=>"           # pgvector cosine distance
+  score: "1 - cosine_distance"
+  min_similarity: null      # no approved cut-off; do not invent one before real measurements
+  top_k: 3
+index:
+  type: none                # exact scan; ~50 vectors. HNSW (vector_cosine_ops) only when thousands of vectors exist
+embedded_fields: [symptom_text, symptom_structured, equipment_class_id, subsystem_source_label, component_name, symptom_category, operating_status, symptom_frequency]
+metadata_filters: [equipment_class_id, subsystem_id, equipment_model_id, taxonomy_code, failure_mode_id, case_status, retrieval_eligibility, is_synthetic]
+excluded_from_embedding: [primary_suspected_cause, alternative_causes, confirmed_cause, failure_mechanism, differential_diagnosis, corrective_action_text, required_spares_text, acceptance_criteria, troubleshooting_steps, observed_outcome]

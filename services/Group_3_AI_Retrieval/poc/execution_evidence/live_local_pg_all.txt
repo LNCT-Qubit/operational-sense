@@ -1,0 +1,173 @@
+>> 001_extensions.sql
+>> 002_taxonomy_tables.sql
+>> 003_reference_tables.sql
+>> 004_hierarchy_and_assets.sql
+>> 005_cases.sql
+>> 006_historical_case_vector.sql
+>> 007_row_level_security.sql
+>> 008_embedding_metadata.sql
+   rolname   | rolsuper | rolbypassrls | has_password 
+-------------+----------+--------------+--------------
+ opsense_app | f        | f            | t
+(1 row)
+
+>> seed_data/005_seed_demo_organization.sql
+>> seed_data/010_seed_reference_from_m06.sql
+>> step4_01_import_sources.sql
+ source_reference_rows 
+-----------------------
+                    14
+(1 row)
+
+>> Operational_Sense_Step4_Taxonomy_Vocabulary_FIXED.sql
+       table_name        | rows 
+-------------------------+------
+ failure_mode_taxonomy   |   30
+ failure_mode_vocabulary |   29
+(2 rows)
+
+>> Operational_Sense_Step4_3_Measurement_References.sql
+ measurement_reference_total 
+-----------------------------
+                         147
+(1 row)
+
+ rows_with_no_numeric_threshold 
+--------------------------------
+                            147
+(1 row)
+
+>> Operational_Sense_Step4_4_Safety_and_Spare_Parts_FIXED.sql
+      table_name      | total_rows 
+----------------------+------------
+ safety_procedure     |         14
+ spare_part_reference |         80
+(2 rows)
+
+>> seed_data/020_seed_asset_hierarchy.sql
+>> Operational_Sense_Step4_5_Import_Operational_Cases.sql
+              set_config              
+--------------------------------------
+ b2a7dce7-b449-4381-ba3b-b520f2c88c2e
+(1 row)
+
+ case_status |     retrieval_eligibility     | is_synthetic | model_is_illustrative | total_cases 
+-------------+-------------------------------+--------------+-----------------------+-------------
+ DRAFT       | demo_only_until_expert_review | t            | t                     |          50
+(1 row)
+
+>> Operational_Sense_Step4_6_Import_Diagnostic_Steps.sql
+              set_config              
+--------------------------------------
+ b2a7dce7-b449-4381-ba3b-b520f2c88c2e
+(1 row)
+
+ source_rows | source_cases | newly_inserted | total_steps_for_organization | unmatched_case_references 
+-------------+--------------+----------------+------------------------------+---------------------------
+         350 |           50 |            350 |                            0 |                         0
+(1 row)
+
+ tier | supervisor_approval_required | step_count 
+------+------------------------------+------------
+    1 | f                            |        150
+    2 | f                            |        150
+    3 | t                            |         50
+(3 rows)
+
+>> Operational_Sense_Step4_Links_and_Verification_FIXED.sql
+              set_config              
+--------------------------------------
+ b2a7dce7-b449-4381-ba3b-b520f2c88c2e
+(1 row)
+
+          check_name          | row_count 
+------------------------------+-----------
+ case_source links            |       286
+ case_failure_mapping links   |        50
+ case_safety_procedure links  |       700
+ case_spare_part links        |        98
+ pending verification records |        50
+(5 rows)
+
+ check_name | case_reference | source_id 
+------------+----------------+-----------
+(0 rows)
+
+ check_name | case_reference | part_name 
+------------+----------------+-----------
+(0 rows)
+
+>> sql/m09/m09_010_resolve_subsystem_fk.sql
+              set_config              
+--------------------------------------
+ b2a7dce7-b449-4381-ba3b-b520f2c88c2e
+(1 row)
+
+ cases_with_subsystem_id | cases_still_unresolved 
+-------------------------+------------------------
+                      39 |                     11
+(1 row)
+
+>> sql/m09/m09_040_apply_curation.sql
+>> sql/m09/m09_020_retrieval_guards.sql
+>> m09_030_validate_live.sql (every row must PASS)
+ asset_node (demo site + 3 assets)                                  |        4 |      4 | PASS
+ case_failure_mapping                                               |       50 |     50 | PASS
+ case_safety_procedure (50 cases x 14 general rules)                |      700 |    700 | PASS
+ case_source                                                        |      286 |    286 | PASS
+ case_spare_part (98 case-specific links)                           |       98 |     98 | PASS
+ case_verification                                                  |       50 |     50 | PASS
+ cases demo_only_until_expert_review                                |       50 |     50 | PASS
+ cases flagged synthetic                                            |       50 |     50 | PASS
+ cases that would be TRUSTED-retrievable (must be 0)                |        0 |      0 | PASS
+ cases with NULL equipment_model_id (must be 0)                     |        0 |      0 | PASS
+ cases with case_status DRAFT                                       |       50 |     50 | PASS
+ cases with subsystem_id (after m09_010 + m09_040)                  |       40 |     40 | PASS
+ cases without exactly 7 steps (must be 0)                          |        0 |      0 | PASS
+ class_subsystem                                                    |       23 |     23 | PASS
+ equipment_class                                                    |        3 |      3 | PASS
+ equipment_model                                                    |       19 |     19 | PASS
+ failure_mode_taxonomy                                              |       30 |     30 | PASS
+ failure_mode_vocabulary                                            |       29 |     29 | PASS
+ historical_case rows with embeddings (not part of M09; 0 expected) |        0 |      0 | PASS
+ m06_equipment_component_reference                                  |       30 |     30 | PASS
+ measurement_reference                                              |      147 |    147 | PASS
+ operational_case                                                   |       50 |     50 | PASS
+ organization                                                       |        1 |      1 | PASS
+ placeholder spare parts named None* (must be 0)                    |        0 |      0 | PASS
+ safety_procedure                                                   |       14 |     14 | PASS
+ source_reference                                                   |       14 |     14 | PASS
+ spare_part_reference                                               |       80 |     80 | PASS
+ subsystem                                                          |       21 |     21 | PASS
+ tier-3 steps without supervisor approval (must be 0)               |        0 |      0 | PASS
+ troubleshooting_step                                               |      350 |    350 | PASS
+ verification rows not PENDING (must be 0)                          |        0 |      0 | PASS
+>> test_schema.sql
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:29: NOTICE:  PASS T1 read Org B cases as Org A (expect 0 rows): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:38: NOTICE:  PASS T2 insert case with own organization
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:47: NOTICE:  PASS T3 insert with other organization rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:55: NOTICE:  PASS T4 update Org B row as Org A (expect 0 rows): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:63: NOTICE:  PASS T5 moving a row to another organization rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:71: NOTICE:  PASS T6 delete denied
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:98: NOTICE:  PASS T7 Tier 3 step without supervisor approval rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:98: NOTICE:  PASS T8 duplicate step number rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:98: NOTICE:  PASS T9 invalid case_status rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:114: NOTICE:  PASS T11 hierarchy cycle rejected
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/test_schema.sql:123: NOTICE:  PASS T10 no tenant context (expect 0 rows): 0
+>> verify_rls.sql
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:18: NOTICE:  PASS R1 opsense_app rolsuper=f rolbypassrls=f (expect f,f)
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:35: NOTICE:  PASS R2a INSERT policies without WITH CHECK (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:35: NOTICE:  PASS R2b UPDATE policies missing USING or WITH CHECK (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:35: NOTICE:  PASS R2c DELETE/ALL policies (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:35: NOTICE:  PASS R2d tenant tables without ENABLE+FORCE RLS (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:65: NOTICE:  PASS R3 SELECT Org B historical_case as Org A (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:65: NOTICE:  PASS R3b SELECT own historical_case (expect 1): 1
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:65: NOTICE:  PASS R4 SELECT Org B troubleshooting_step via parent as Org A (expect 0): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:74: NOTICE:  PASS R5 INSERT historical_case for Org B as Org A rejected: new row violates row-level security policy for table "historical_case"
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:83: NOTICE:  PASS R6 INSERT child step under Org B case rejected: new row violates row-level security policy for table "troubleshooting_step"
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:91: NOTICE:  PASS R7 UPDATE Org B historical_case as Org A (expect 0 rows): 0
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:99: NOTICE:  PASS R8 moving own row to Org B rejected: new row violates row-level security policy for table "historical_case"
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:107: NOTICE:  PASS R9 DELETE denied (no grant)
+psql:/home/claude/work/Group_3_AI_Retrieval/database/scripts/verify_rls.sql:116: NOTICE:  PASS R10 historical_case with empty tenant context (expect 0): 0
+All verification scripts reported PASS and no FAIL/ERROR.
+local_pg.sh all: OK

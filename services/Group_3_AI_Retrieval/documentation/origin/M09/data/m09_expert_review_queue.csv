@@ -1,0 +1,51 @@
+﻿case_reference,equipment_class_id,subsystem_source_label,component_name,subsystem_id_resolvable,needs_group1_subsystem_decision,no_taxonomy_code,needs_depth_expansion,acceptance_criteria_is_placeholder,reason_codes
+CASE-PUMP-001,EQ-PUMP,Bearing Assembly,Rolling Element Bearing,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-002,EQ-PUMP,Mechanical Seal,Seal Faces (Rotating / Stationary),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-003,EQ-PUMP,Drive Train,Flexible Coupling,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-004,EQ-PUMP,Suction Line,Suction Strainer,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-005,EQ-PUMP,Hydraulic End,Impeller,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-006,EQ-PUMP,Mechanical Seal,Seal Faces (Rotating / Stationary),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-007,EQ-PUMP,Bearing Assembly,Rolling Element Bearing,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-008,EQ-PUMP,Suction and Priming,Suction Line Joints and Gland Seal Interface,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-009,EQ-PUMP,Bearing Assembly,Bearing Housing Isolators / Lip Seals,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-010,EQ-PUMP,Impeller and casing,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-011,EQ-PUMP,Impeller and drive assembly,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-012,EQ-PUMP,Motor protection and pump system,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-013,EQ-PUMP,Hydraulic End,Impeller and Wear Rings,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-014,EQ-PUMP,Drive Train,Flexible Coupling,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-015,EQ-PUMP,Hydraulic End,Impeller and Casing Volute,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-016,EQ-PUMP,Suction and Priming,Suction Line Joints and Gland Seal Interface,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-PUMP-017,EQ-PUMP,Shaft Assembly,Pump Shaft,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-001,EQ-MOTOR,Stator & Windings,Winding Insulation (Copper Magnet Wire and Varnish),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-002,EQ-MOTOR,Bearing Assembly,Drive-End Bearing and Grease,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-003,EQ-MOTOR,Cooling System,Cooling Fan and Cowl,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-004,EQ-MOTOR,Starter circuit and motor supply,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-005,EQ-MOTOR,Rotor Assembly,Rotor Core and Shaft,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-006,EQ-MOTOR,Bearing Assembly,Drive-End Bearing and Grease,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-007,EQ-MOTOR,Motor and overload protection,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-008,EQ-MOTOR,Power Supply,"Supply Phase Conductors, Fuses and Contactor",True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-009,EQ-MOTOR,Stator & Windings,Winding Insulation (Copper Magnet Wire and Varnish),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-010,EQ-MOTOR,Variable-frequency drive and motor,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-011,EQ-MOTOR,Terminal Box,Terminal Lugs and Connections,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-012,EQ-MOTOR,Cooling System,Cooling Fan and Cowl,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-013,EQ-MOTOR,Mounting and Foundation,Motor Feet and Foundation Bolts,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-014,EQ-MOTOR,Rotor-Stator Interface,Air Gap (Rotor and Stator Core),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-015,EQ-MOTOR,Rotor Assembly,Squirrel-Cage Rotor Bars and End Rings,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-MOT-016,EQ-MOTOR,Bearing Assembly,Bearing (Inverter-Fed Shaft Currents),True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-MOT-017,EQ-MOTOR,Coupling,,False,True,True,False,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-001,EQ-COMP,Oil Separation System,Oil Separator Element,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-COMP-002,EQ-COMP,Cooling System,Oil Cooler / Aftercooler,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-003,EQ-COMP,Cooling System,Oil Cooler / Aftercooler,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-COMP-004,EQ-COMP,Air Intake,Intake Air Filter,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-005,EQ-COMP,Oil Separation System,Oil Separator Element,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-COMP-006,EQ-COMP,Pressure control system,,False,True,True,True,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-007,EQ-COMP,Drive assembly and compressor element,,False,True,True,True,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-008,EQ-COMP,Capacity Control,Inlet / Unloader Valve,True,False,False,False,True,ACCEPTANCE_PLACEHOLDER
+CASE-COMP-009,EQ-COMP,Condensate Management,Automatic Condensate Drain,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-010,EQ-COMP,Drive coupling and motor,,False,True,True,True,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-011,EQ-COMP,Air-Oil Circuit,Minimum Pressure Valve,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-012,EQ-COMP,Air End,Air End Bearings,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-013,EQ-COMP,Air End,Rotor Screws (Male / Female),True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-014,EQ-COMP,Oil System,Thermostatic (Temperature Control) Valve,True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-015,EQ-COMP,Capacity Control,Solenoid Valve (Load / Unload),True,False,False,True,True,DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER
+CASE-COMP-016,EQ-COMP,Controls and Instrumentation,,False,True,True,True,True,SUBSYSTEM_LABEL_NOT_IN_APPROVED_LIST;COMPONENT_BLANK;NO_TAXONOMY_CODE;DEPTH_EXPANSION_FLAG;ACCEPTANCE_PLACEHOLDER

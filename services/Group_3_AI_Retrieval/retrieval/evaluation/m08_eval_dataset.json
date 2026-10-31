@@ -1,0 +1,189 @@
+{
+  "dataset_name": "M08 synthetic retrieval evaluation set",
+  "version": "1.0",
+  "authoring": {
+    "expected_ids_fixed_before_any_model_run": true,
+    "basis": "Queries and expected case IDs were written by reading the 50 synthetic seed cases in Operational_Sense_Step4_5_Import_Operational_Cases.sql. No embedding model had been run when this file was written, and expected IDs must not be edited after seeing results (record any change in the report instead).",
+    "reviewed_by_domain_expert": false,
+    "note": "Expected IDs are the author's engineering reading of synthetic cases, NOT expert-validated ground truth. Cases are DRAFT/demo-only, so evaluation needs --include-demo."
+  },
+  "metrics": {
+    "hit_at_3": "at least one expected case in top 3",
+    "recall_at_3": "share of expected cases in top 3",
+    "mrr": "mean of 1/rank of first expected case; irrelevant queries excluded"
+  },
+  "queries": [
+    {
+      "id": "Q01",
+      "category": "near_exact",
+      "query": "Pump chalu karne ke baad shaft ke paas se paani tapakna shuru hua, ab boondh gir rahi hai aur baseplate geeli ho gayi. Pump tank khali hone par kuch der dry chala tha.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-002"
+      ],
+      "rationale": "Shortened copy of CASE-PUMP-002 technician wording (seal leak after dry run)."
+    },
+    {
+      "id": "Q02",
+      "category": "near_exact",
+      "query": "Receiver aur downstream line me paani jama ho raha hai, drain se kuch nahi nikalta.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-COMP-009"
+      ],
+      "rationale": "Verbatim CASE-COMP-009 wording (condensate drain not discharging)."
+    },
+    {
+      "id": "Q03",
+      "category": "paraphrase_english",
+      "query": "Water is dripping from the pump shaft seal area and getting worse, the base plate is wet. The pump ran dry last week when the tank was empty.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-002"
+      ],
+      "rationale": "English paraphrase of CASE-PUMP-002; dry-run history separates it from CASE-PUMP-006 (chemistry change)."
+    },
+    {
+      "id": "Q04",
+      "category": "paraphrase_english",
+      "query": "The motor is running but the pump delivers no water. Discharge gauge reads about zero and there is an air sound in the casing. It was restarted after shutdown and the foot valve may be faulty.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-008"
+      ],
+      "rationale": "English paraphrase of CASE-PUMP-008 (loss of prime, foot valve suspect)."
+    },
+    {
+      "id": "Q05",
+      "category": "paraphrase_english",
+      "query": "Air compressor is running but the pressure will not build up. The intake valve seems not to open fully.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-COMP-008"
+      ],
+      "rationale": "English paraphrase of CASE-COMP-008 (inlet valve). CASE-COMP-001/-011 also describe slow build-up but name other causes."
+    },
+    {
+      "id": "Q06",
+      "category": "cross_equipment_context",
+      "query": "Pump bearing is running hot, the grease looks dry and black and has not been relubricated for a long time. There is a slight squeal and it gets worse in hot weather.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-MOT-006"
+      ],
+      "rationale": "Same symptom pattern as CASE-MOT-006 (motor DE bearing) but described for a pump: tests retrieval across equipment classes with no class filter."
+    },
+    {
+      "id": "Q07",
+      "category": "cross_equipment_context",
+      "query": "Machine trips on high temperature in summer. Dust has built up on the cooling fins and the ventilation is blocked.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-COMP-002",
+        "CASE-MOT-003"
+      ],
+      "rationale": "Equipment not named; matches dust-blocked cooling in CASE-COMP-002 (oil cooler/louvre) and CASE-MOT-003 (fan cowl)."
+    },
+    {
+      "id": "Q08",
+      "category": "hinglish_variant",
+      "query": "pump me kankar chalne jaisi awaaz aa rahi hai, discharge pressure upar niche ho raha hai, suction valve thoda band kiya tha",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-005"
+      ],
+      "rationale": "Informal Hinglish spelling variant of CASE-PUMP-005 (suction throttling, crackling). CASE-PUMP-004 is the confusable case."
+    },
+    {
+      "id": "Q09",
+      "category": "hard_negative",
+      "query": "Discharge pressure is slowly dropping, suction vacuum is higher than normal, occasional crackling noise, the strainer was not cleaned for a long time.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-004"
+      ],
+      "rationale": "CASE-PUMP-004 (strainer). Shares 'crackling' with CASE-PUMP-005, so ranking PUMP-004 first tests discrimination."
+    },
+    {
+      "id": "Q10",
+      "category": "class_filter",
+      "query": "Currents on the three phases are unequal, the terminal box is hot and a lug looks discoloured.",
+      "filters": {
+        "equipment_class_id": "EQ-MOTOR"
+      },
+      "expected_case_ids": [
+        "CASE-MOT-011"
+      ],
+      "rationale": "CASE-MOT-011 with class filter EQ-MOTOR."
+    },
+    {
+      "id": "Q11",
+      "category": "class_filter",
+      "query": "Unit stops on high temperature",
+      "filters": {
+        "equipment_class_id": "EQ-COMP"
+      },
+      "expected_case_ids": [
+        "CASE-COMP-002",
+        "CASE-COMP-003"
+      ],
+      "rationale": "Short vague query with class filter EQ-COMP; CASE-COMP-002 and -003 both describe high-temperature shutdown/discharge temperature."
+    },
+    {
+      "id": "Q12",
+      "category": "paraphrase_english",
+      "query": "Insulation resistance alarm, megger readings lower than before, especially in monsoon, and water marks inside the terminal box.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-MOT-009"
+      ],
+      "rationale": "English paraphrase of CASE-MOT-009 (seasonal moisture, falling IR)."
+    },
+    {
+      "id": "Q13",
+      "category": "paraphrase_english",
+      "query": "Flow and pressure needles keep swinging, air bubbles in the tank and a light hiss near the gland. The pump does not stop delivering but delivery is uneven.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-PUMP-016"
+      ],
+      "rationale": "English paraphrase of CASE-PUMP-016 (air ingress at gland/joints)."
+    },
+    {
+      "id": "Q14",
+      "category": "hard_negative",
+      "query": "External fins are clean but discharge temperature is still high, the oil at the cooler outlet is hot and black, internal sludge is suspected.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-COMP-003"
+      ],
+      "rationale": "CASE-COMP-003; confusable with CASE-COMP-002 (dusty fins), so tests discrimination."
+    },
+    {
+      "id": "Q15",
+      "category": "paraphrase_english",
+      "query": "Whining sound started after the VFD was installed and bearings keep failing; fluting marks seen on the races.",
+      "filters": {},
+      "expected_case_ids": [
+        "CASE-MOT-016"
+      ],
+      "rationale": "English paraphrase of CASE-MOT-016 (inverter shaft currents)."
+    },
+    {
+      "id": "Q16",
+      "category": "irrelevant",
+      "query": "The office printer shows a paper jam error and prints blank pages.",
+      "filters": {},
+      "expected_case_ids": [],
+      "rationale": "Not industrial rotating equipment. No case should be a strong match. No expected ID: Recall/MRR not computed; top-3 similarity is reported for threshold discussion."
+    },
+    {
+      "id": "Q17",
+      "category": "irrelevant",
+      "query": "What is a good recipe for butter chicken?",
+      "filters": {},
+      "expected_case_ids": [],
+      "rationale": "Unrelated to maintenance. Same handling as Q16."
+    }
+  ]
+}
