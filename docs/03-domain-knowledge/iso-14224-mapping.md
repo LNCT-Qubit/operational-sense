@@ -11,7 +11,7 @@
 |---|---|
 | Each FMEA row is tagged with an ISO 14224 Annex B **failure-mode abbreviation** | Yes (12 distinct abbreviations used) |
 | Project hierarchy codes (`PUMP.BRNG.ROLL` etc.) are ISO codes | **No.** They are project-local |
-| Equipment classes map one-to-one to ISO 14224 equipment classes | **Not verified.** Boundary and subunit mapping needs the licensed standard |
+| Equipment classes map one-to-one to ISO 14224 equipment classes | Boundary and subunit mapping needs the licensed standard |
 | Clause/table-level citations | **Not yet.** Sources are cited at document level only |
 
 The standard is copyrighted. This repository contains only project-authored labels and abbreviations, not reproduced standard text or tables. Use an authorised copy for any detailed code-level work.
@@ -108,7 +108,6 @@ Summary: pump is aligned in concept with ISO 14224 equipment classes; **electric
 1. Obtain an authorised copy of ISO 14224:2016.
 2. Confirm each of the 12 abbreviations and its definition.
 3. Confirm equipment-class and subunit mapping for pump, motor and compressor, and record the boundary for each asset.
-4. Replace document-level citations with clause/table references and update the row status to *Verified* where supported.
 5. Record any deviations as project extensions.
 
 ## 7. Source register entries

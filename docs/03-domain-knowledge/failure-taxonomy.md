@@ -166,7 +166,7 @@ The ID sequence has gaps (`FM-002` … `FM-050`) because the list was carried ov
 
 ## 8. Validation status and open items
 
-All 30 FMEA rows are **Engineering Assumptions**. They were written from general reliability practice and cited at document level (no clause or page numbers). A row may be promoted to *Verified* only after its sources have been checked clause-by-clause. **No row is currently Verified.** All taxonomy and vocabulary sheets carry `pending_domain_review` / `project_taxonomy_pending_domain_approval`.
+All 30 FMEA rows are **Engineering Assumptions**. They were written from general reliability practice and cited at document level (no clause or page numbers). A row may be promoted to *Verified* only after its sources have been checked clause-by-clause.  All taxonomy and vocabulary sheets carry `pending_domain_review` / `project_taxonomy_pending_domain_approval`.
 
 Open items for the taxonomy steward:
 
