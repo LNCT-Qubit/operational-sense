@@ -1,21 +1,5 @@
 -- 004_hierarchy_and_assets.sql
--- STATUS: DRAFT, pending Common Data Model v1.0
--- Reconciles M04 v1.2 (ASSET_NODE), M06 v2.0 (asset_node, cycle trigger, component
--- reference) and the project proposal (Organization, EquipmentModel).
---
--- Two separate hierarchies (M04 G1_Alignment_Review):
---   1. ASSET hierarchy (real plant assets): asset_node, parent -> child.
---   2. KNOWLEDGE taxonomy: equipment_class -> subsystem -> component -> failure mode
---      (class_subsystem, failure_mode_taxonomy). Synthetic cases are NOT assets.
---
--- Changes against M06's candidate migration (needs M06's agreement):
---   * equipment_class is created in 002 (not here), so M06's preflight guard would
---     fail. Do NOT run M06's 0001 migration together with this schema.
---   * asset_node gets organization_id (tenant, needed for RLS) and equipment_model_id.
---   * the cycle trigger also checks the parent belongs to the same organization.
---   * asset_level and status stay free text (Q01 open), as in M06.
---   * asset_id keeps M06's BIGINT identity (Q09 open).
-
+ 
 BEGIN;
 
 -- Which subsystems exist for which equipment class (knowledge taxonomy, not assets)
