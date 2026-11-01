@@ -1,20 +1,4 @@
 -- 007_row_level_security.sql
--- STATUS: DRAFT. Whether RLS is in Sprint 1 scope is still to be confirmed
--- (proposal Part D). This file is separate so it can be deferred without touching
--- the other migrations.
---
--- Implements proposal Section 6:
---   * tenant context is set per transaction:
---       SELECT set_config('app.current_org_id', '<org uuid>', true);
---   * separate SELECT / INSERT / UPDATE policies with USING and WITH CHECK
---   * no DELETE policy and no DELETE grant (retirement = status REVOKED)
---   * FORCE ROW LEVEL SECURITY on every tenant table
---   * a NULL or empty context fails closed (NULLIF(..., '') -> NULL -> no rows)
---   * audit_log is append-only for the application role (SELECT, INSERT only)
---
--- The application must connect as opsense_app, NOT as postgres. A superuser or a
--- BYPASSRLS role skips RLS completely.
--- DEV PASSWORD BELOW IS FOR LOCAL USE ONLY. Change it for any shared environment.
 
 BEGIN;
 
