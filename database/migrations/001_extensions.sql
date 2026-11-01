@@ -4,3 +4,4 @@
 
 CREATE EXTENSION IF NOT EXISTS vector;     -- pgvector (semantic retrieval, later sprints)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid() for tenant/case tables
+j
