@@ -1,29 +1,5 @@
 -- 005_cases.sql
--- STATUS: DRAFT, pending Common Data Model v1.0
--- Central troubleshooting case table and its child tables.
--- Sources: project proposal (Sections 2-5), M04 ERD v1.1, Group 1 Import_View.
---
--- ASSUMPTIONS (confirm at the CDM workshop):
---   A1. case_status uses the proposal lifecycle:
---       DRAFT, SUBMITTED, VERIFIED, REJECTED, REVOKED.
---       The workbook's PENDING_VALIDATION is expected to load as SUBMITTED.
---   A2. retrieval_eligibility keeps the workbook's flag; all 50 seed cases are
---       'demo_only_until_expert_review'.
---   A3. Symptom fields are columns on operational_case (one symptom per case in
---       the workbook). M04's separate CASE_SYMPTOM table is deferred.
---   A4. Failure mode / taxonomy link lives in case_failure_mapping (M04 design),
---       so known gaps stay NULL and visible.
---   A5. Suspected and confirmed cause are separate columns. Seed cases have
---       confirmed_cause = NULL.
---   A6. plant_facility / production_line are plain text context (M04 Q05 open).
---   A8. Real assets use M04/M06's asset_node. Synthetic cases keep asset_id NULL.
---       The source subsystem wording is kept in subsystem_source_label; subsystem_id is
---       filled only when it matches the approved subsystem list.
---   A7. Subsystem must be valid for the class (composite FK). Cases with a NULL
---       subsystem are allowed but are never a strict match.
---       If loading fails because subsystem names are unclean, fix the names
---       (Group 1 / M06); do not remove this constraint without agreement.
-
+ 
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS operational_case (
