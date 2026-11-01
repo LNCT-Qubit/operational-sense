@@ -220,6 +220,8 @@ This is a logical architecture, not a deployment diagram. Exact implementation b
 |---|---|
 | React PWA (TypeScript + Tailwind CSS) | Frontline user experience and incident capture. |
 | Node.js + Express | Core business logic, APIs, authorization and workflow orchestration. |
+| Python AI/retrieval processing | Case validation, embedding-text construction, ingestion and similarity-search workflows. Its runtime boundary with the Node.js backend is not yet defined. |
+| Sentence Transformers | Generates embeddings with the configured model (real inference pending). |
 | PostgreSQL | Operational cases, equipment, taxonomy, organizations and audit records. |
 | pgvector | Semantic similarity search over case representations. |
 | Speech-to-text integration | Convert synchronized audio into text. |
@@ -232,30 +234,44 @@ The core application remains a modular monolith. External AI providers and infra
 
 ## 5. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React + TypeScript |
-| Styling | Tailwind CSS |
-| Application type | Progressive Web Application (PWA) |
-| Offline storage | IndexedDB + Service Worker |
-| Backend | Node.js + Express |
-| Database | PostgreSQL |
-| Vector search | pgvector |
-| Authentication | JWT + role-based access control (RBAC) |
-| Database migrations | Node-compatible migration runner |
-| Speech processing | Server-side speech-to-text provider (selection pending) |
-| AI extraction | Schema-constrained structured extraction |
-| AI integration | LLM API + embeddings |
-| Semantic representation | Embeddings (dimension confirmed in M08) |
-| Synchronization | Background Sync where supported, with polling fallback |
-| Version control | Git and GitHub |
-| CI/CD | Docker + GitHub Actions |
+Status labels: **Implemented** = built and documented by the owning workstream; **Selected** = chosen in the project proposal (implementation status is reported by the owning workstream, not restated here); **Planned** = scheduled for a later sprint; **Pending** = decision not yet made. Each workstream's own report is the authority for its status.
 
-Exact runtime versions, dependency versions and provider selections must be maintained in the service configuration and technical documentation.
+| Layer | Technology | Status |
+|---|---|---|
+| Frontend | React + TypeScript, Tailwind CSS, Progressive Web App | Selected |
+| Offline capture | IndexedDB + Service Worker (Background Sync where supported, polling fallback) | Planned (Sprint 2) |
+| Core backend | Node.js + Express, JWT + role-based access control (RBAC) | Selected |
+| AI / retrieval processing | Python 3.10+ (syntax-checked for 3.10; test runs on 3.12/3.13) | Implemented (AI & Retrieval); mock-tested |
+| Embedding model | `intfloat/multilingual-e5-small` via Sentence Transformers, 384 dimensions | Configured, provisional; real inference not yet executed |
+| Primary database | PostgreSQL 16 | Schema implemented (migrations 001–008); scratch-environment runs are reported in the project evidence; the AI & Retrieval review did not re-run them |
+| Vector search | pgvector extension (`vector(384)`, cosine distance `<=>`) | Implemented in SQL; exercised with mock vectors only |
+| Python database access | psycopg 3 and python-dotenv | Implemented |
+| Migrations | Plain SQL files applied by shell scripts (`migrate.sh`, `seed.sh`) | Implemented |
+| Speech-to-text | Server-side; provider not selected (Whisper under evaluation) | Pending / Planned (Sprint 2) |
+| Structured extraction | LLM with schema-constrained output; provider not selected | Planned (Sprint 2) |
+| Testing | `unittest` (standard library), optional `pytest` and `jsonschema`, static-check script `tools/run_static_checks.sh` | Implemented |
+| Containers / local dev | Docker Compose (`pgvector/pgvector:pg16`, bound to 127.0.0.1) | Implemented; image tag not pinned by digest yet |
+| CI | GitHub Actions | Planned |
+| Version control | Git + GitHub | In use |
 
-No speech-to-text provider should be described as finalized until the selection and evaluation have been completed.
+### Python components of the AI & Retrieval layer (Group 3)
+
+| Technology | Responsibility | Required for |
+|---|---|---|
+| Python 3.10+ | AI, data processing, case validation and retrieval workflows | Everything |
+| Standard library only | Schema validation, dataset checks, offline pipeline and the `unittest` suite | Offline tests (no installs needed) |
+| Sentence Transformers | Embedding generation with `intfloat/multilingual-e5-small` (384 dimensions; provisional; real inference pending); imported lazily | Real embedding mode only |
+| psycopg 3 | PostgreSQL connectivity from Python | Live database mode only |
+| python-dotenv | Loads configuration from `.env` (never committed) | Live database / embedding mode |
+| pgvector (PostgreSQL extension) | Vector storage and cosine similarity search inside SQL | Live database mode |
+| pgvector (Python package) | Listed in `requirements.txt` but not imported by the current code; vectors are passed as text literals with `::vector` casts. Remove it or keep it reserved for later. | Not currently needed |
+
+Exact runtime and dependency versions are defined in `requirements.txt` and the Docker configuration, not in this README. Embeddings are generated locally by the configured model, not through an external API. No speech-to-text or LLM provider should be described as finalized until its selection and evaluation are documented.
+
+**Model configuration clarification:** `intfloat/multilingual-e5-small` is the configured embedding model with a 384-dimensional output. No successful real-model inference has been demonstrated yet; the mock vectors used in tests must not be represented as real model embeddings.
 
 ---
+
 
 ## 6. Knowledge Model and Retrieval
 
