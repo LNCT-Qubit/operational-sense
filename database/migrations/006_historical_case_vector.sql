@@ -1,15 +1,5 @@
 -- 006_historical_case_vector.sql
--- STATUS: DRAFT, pending Common Data Model v1.0 and M08 (embedding strategy)
--- Thin retrieval index row (proposal Section 3). Narrative, evidence and steps are
--- always read from operational_case, so nothing is duplicated.
---
--- ASSUMPTIONS:
---   * vector(384) is a PLACEHOLDER dimension. M08 must confirm the embedding model.
---     To change it before any embeddings exist:
---       ALTER TABLE historical_case ALTER COLUMN embedding TYPE vector(<N>);
---   * embedding is nullable: no embeddings are generated in Sprint 1.
---   * The vector index is created later, once embeddings exist and M08 picks a type.
-
+ 
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS historical_case (
