@@ -1,15 +1,5 @@
 -- 002_taxonomy_tables.sql
--- STATUS: DRAFT, pending Common Data Model v1.0
--- Source: Group 1 workbook (Equipment_Reference, Failure_Mode_Taxonomy,
---         Taxonomy_FM_Vocabulary) and M04 ERD v1.1.
--- v2: equipment_class now matches M06's candidate (same IDs, review_status values,
---     provenance columns) so M06's seed rows load without change.
--- OPEN DECISIONS affecting this file:
---   * M04 Q01 / our proposal: subsystem is modelled here as its own table
---     (subsystem_id) because the strict retrieval filter needs it. M04's ERD
---     currently keeps subsystem as text only. Confirm at the CDM workshop.
---   * review_status allowed values are provisional.
-
+ 
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS equipment_class (
