@@ -1,8 +1,4 @@
 -- 003_reference_tables.sql
--- STATUS: DRAFT, pending Common Data Model v1.0
--- Source: Group 1 workbook (Sources, Safety_Procedures, Measurement_Reference,
---         Spare_Parts_Reference) and M04 ERD v1.1.
--- Reference data only. No numeric thresholds are inferred (see workbook README).
 
 BEGIN;
 
