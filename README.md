@@ -106,7 +106,7 @@ Operational Sense operates across a closed-loop knowledge lifecycle:
 |---|---|---|
 | **1. Vocabulary Mismatch vs. Hierarchical Context** | Pure dense vector search confuses synonyms across machines (e.g., retrieving a vibration match from a centrifuge when servicing a centrifugal slurry pump), causing hazardous cross-equipment advice. | **Two-Stage Hybrid Retrieval Pipeline:** Vector search is never global. A deterministic Graph Filter (Hard Constraint) first isolates the exact asset class and subsystem (project-local taxonomy informed by ISO 14224 concepts; no ISO 14224 compliance is claimed). Dense vector similarity (Soft Constraint) runs only within this filtered subgraph. |
 | **2. Shop-Floor Connectivity Realities ("The Basement Boiler Room Problem")** | Factory floors, boiler pits, and offshore decks frequently have zero cellular coverage and strict Wi-Fi firewalls, rendering cloud-only web applications unusable. | **Offline-First PWA with Local Voice Buffer:** Built as an offline-first Progressive Web App (PWA) using IndexedDB and Service Workers. Technicians record voice notes and notes completely offline. Background sync offloads the payload and triggers server-side speech-to-text transcription upon reconnection (provider selection pending; Whisper is under evaluation, not selected). |
-| **3. Knowledge Base Poisoning via Unverified Feedback Loops** | Junior technicians record incorrect fixes, and time-pressured supervisors rubber-stamp approvals, contaminating the vector retrieval corpus with bad advice. | **Strict Quarantine Gate & Review Audit Telemetry:** Newly captured cases are intended to enter as `DRAFT` / `SUBMITTED` and remain quarantined (`retrieval_eligibility = 'demo_only_until_expert_review'`). In the V3 synthetic corpus, all 50 cases remain DRAFT/demo-only. Unapproved cases are excluded from retrieval. The design intends to log reviewer identity, timestamp, and review duration (`verification_duration_seconds` exists as a column) so unusually fast approvals can be flagged; the flagging logic is not implemented. |
+| **3. Knowledge Base Poisoning via Unverified Feedback Loops** | Junior technicians record incorrect fixes, and time-pressured supervisors rubber-stamp approvals, contaminating the vector retrieval corpus with bad advice. | **Strict Quarantine Gate & Review Audit Telemetry:** Newly captured cases are intended to enter as `DRAFT` / `SUBMITTED` and remain quarantined (`retrieval_eligibility = 'demo_only_until_expert_review'`). In the current synthetic corpus, all 50 cases remain DRAFT/demo-only. Unapproved cases are excluded from retrieval. The design intends to log reviewer identity, timestamp, and review duration (`verification_duration_seconds` exists as a column) so unusually fast approvals can be flagged; the flagging logic is not implemented. |
 
 ---
 
@@ -234,16 +234,16 @@ The core application remains a modular monolith. External AI providers and infra
 
 ## 5. Technology Stack
 
-Status labels: **Implemented** = present in the V3 Group 3 package; **Selected** = chosen in the proposal, no code in the V3 package; **Planned** = scheduled for a later sprint; **Pending** = decision not yet made.
+Status labels: **Implemented** = built and documented by the owning workstream; **Selected** = chosen in the project proposal (implementation status is reported by the owning workstream, not restated here); **Planned** = scheduled for a later sprint; **Pending** = decision not yet made. Each workstream's own report is the authority for its status.
 
 | Layer | Technology | Status |
 |---|---|---|
-| Frontend | React + TypeScript, Tailwind CSS, Progressive Web App | Selected; not in the V3 package |
+| Frontend | React + TypeScript, Tailwind CSS, Progressive Web App | Selected |
 | Offline capture | IndexedDB + Service Worker (Background Sync where supported, polling fallback) | Planned (Sprint 2) |
-| Core backend | Node.js + Express, JWT + role-based access control (RBAC) | Selected; not in the V3 package |
-| AI / retrieval processing | Python 3.10+ (syntax-checked for 3.10; test runs on 3.12/3.13) | Implemented; mock-tested |
+| Core backend | Node.js + Express, JWT + role-based access control (RBAC) | Selected |
+| AI / retrieval processing | Python 3.10+ (syntax-checked for 3.10; test runs on 3.12/3.13) | Implemented (AI & Retrieval); mock-tested |
 | Embedding model | `intfloat/multilingual-e5-small` via Sentence Transformers, 384 dimensions | Configured, provisional; real inference not yet executed |
-| Primary database | PostgreSQL 16 | Schema implemented (migrations 001–008); scratch-environment runs reported in package evidence, not re-run in the V3 audit |
+| Primary database | PostgreSQL 16 | Schema implemented (migrations 001–008); scratch-environment runs are reported in the project evidence; the AI & Retrieval review did not re-run them |
 | Vector search | pgvector extension (`vector(384)`, cosine distance `<=>`) | Implemented in SQL; exercised with mock vectors only |
 | Python database access | psycopg 3 and python-dotenv | Implemented |
 | Migrations | Plain SQL files applied by shell scripts (`migrate.sh`, `seed.sh`) | Implemented |
@@ -251,10 +251,10 @@ Status labels: **Implemented** = present in the V3 Group 3 package; **Selected**
 | Structured extraction | LLM with schema-constrained output; provider not selected | Planned (Sprint 2) |
 | Testing | `unittest` (standard library), optional `pytest` and `jsonschema`, static-check script `tools/run_static_checks.sh` | Implemented |
 | Containers / local dev | Docker Compose (`pgvector/pgvector:pg16`, bound to 127.0.0.1) | Implemented; image tag not pinned by digest yet |
-| CI | GitHub Actions | Planned; no workflow files in the V3 package |
+| CI | GitHub Actions | Planned |
 | Version control | Git + GitHub | In use |
 
-### Python components in the Group 3 package
+### Python components of the AI & Retrieval layer (Group 3)
 
 | Technology | Responsibility | Required for |
 |---|---|---|
@@ -268,7 +268,7 @@ Status labels: **Implemented** = present in the V3 Group 3 package; **Selected**
 
 Exact runtime and dependency versions are defined in `requirements.txt` and the Docker configuration, not in this README. Embeddings are generated locally by the configured model, not through an external API. No speech-to-text or LLM provider should be described as finalized until its selection and evaluation are documented.
 
-**Model configuration clarification:** `intfloat/multilingual-e5-small` is the configured embedding model with a 384-dimensional output. The V3 audit did not establish successful real-model inference; the mock vectors used in tests must not be represented as real model embeddings.
+**Model configuration clarification:** `intfloat/multilingual-e5-small` is the configured embedding model with a 384-dimensional output. No successful real-model inference has been demonstrated yet; the mock vectors used in tests must not be represented as real model embeddings.
 
 ---
 
@@ -311,17 +311,17 @@ Project taxonomy codes are nullable. If a code cannot be assigned confidently, t
 
 ### ISO 14224 and FMEA alignment
 
-The project uses an equipment and failure taxonomy informed by the team's reference data and FMEA-style relationships. The V3 Group 3 package does **not** claim formal ISO 14224 adoption, compliance or certification. Its failure-mode identifiers are project-local; ambiguous cross-links remain provisional pending Group 1/domain review:
+The project uses an equipment and failure taxonomy informed by the team's reference data and FMEA-style relationships. The project does **not** claim formal ISO 14224 adoption, compliance or certification. Its failure-mode identifiers are project-local; ambiguous cross-links remain provisional pending Group 1/domain review:
 
 - **Equipment classes represented in the synthetic corpus:** Pumps (`EQ-PUMP`), motors (`EQ-MOTOR`) and compressors (`EQ-COMP`).
 - **Reference data:** The project database includes the team's subsystem and component reference records; unresolved case mappings are retained as null rather than guessed.
 - **FMEA-style case fields:** Cases distinguish symptoms, suspected causes, failure mechanisms/effects and corrective actions. A suspected cause is not a confirmed root cause.
 
-V3 mapping validation reports 40/50 subsystem mappings resolved (39 exact label matches and one provisional curated rule), 10 unresolved subsystem mappings, 11 missing component names and 11 missing taxonomy codes. Thirteen taxonomy cross-links remain ambiguous/provisional. These require Group 1/domain review. The package does not claim ISO 14224 compliance or certification.
+The current dataset validation reports 40/50 subsystem mappings resolved (39 exact label matches and one provisional curated rule), 10 unresolved subsystem mappings, 11 missing component names and 11 missing taxonomy codes. Thirteen taxonomy cross-links remain ambiguous/provisional. These require Group 1/domain review. The project does not claim ISO 14224 compliance or certification.
 
 ### Two-stage hybrid retrieval strategy (intended design)
 
-The pipeline below is the intended design. In the V3 package the metadata filters and pgvector ranking exist in code and are mock-tested; real-vector retrieval is unverified. To resolve the vocabulary mismatch without risking cross-equipment hallucination, Operational Sense employs a strict two-stage retrieval pipeline:
+The pipeline below is the intended design. In the current implementation the metadata filters and pgvector ranking exist in code and are mock-tested; real-vector retrieval is unverified. To resolve the vocabulary mismatch without risking cross-equipment hallucination, Operational Sense employs a strict two-stage retrieval pipeline:
 
 ```text
 Incoming Query: "shaking heavily near 1800 RPM with high pitched whine"
@@ -346,11 +346,11 @@ Incoming Query: "shaking heavily near 1800 RPM with high pitched whine"
 ```
 
 1. **Stage 1 — Graph Filter (Hard Constraint):** Filters verified historical cases using exact `equipment_class_id`, `subsystem_id`, and `case_status = 'VERIFIED'` with `retrieval_eligibility = 'eligible'`. Eliminates cross-equipment mismatches (e.g., never retrieving centrifuge vibration symptoms for a slurry pump).
-2. **Stage 2 — Dense Vector Search (Soft Constraint):** The implementation ranks candidates within the filtered subset using pgvector cosine distance. V3 has only mock-vector execution evidence; real-model ranking quality and Hinglish retrieval remain unverified.
+2. **Stage 2 — Dense Vector Search (Soft Constraint):** The implementation ranks candidates within the filtered subset using pgvector cosine distance. Only mock-vector execution evidence exists so far; real-model ranking quality and Hinglish retrieval remain unverified.
 
-### Strict and relaxed results (design; not implemented in the V3 retrieval code)
+### Strict and relaxed results (design; not yet implemented in the retrieval code)
 
-The V3 code applies optional equipment-class, subsystem, model, taxonomy and synthetic-flag filters and returns up to three results; the strict/relaxed/unconfirmed result classification below is the intended product behavior and is **not yet implemented or tested**.
+The current retrieval code applies optional equipment-class, subsystem, model, taxonomy and synthetic-flag filters and returns up to three results; the strict/relaxed/unconfirmed result classification below is the intended product behavior and is **not yet implemented or tested**.
 
 | Result type | Matching rule | Product treatment |
 |---|---|---|
@@ -376,7 +376,7 @@ A captured incident does not automatically become trusted organizational knowled
 | `REJECTED` | Case rejected for incomplete or inaccurate technical data. | No |
 | `REVOKED` | Previously verified case subsequently identified as incorrect. | No (Immediately Excluded) |
 
-Only `VERIFIED` cases with `retrieval_eligibility = 'eligible'` are eligible for trusted historical retrieval. V3 contains no such cases; its demo mode is explicitly separate and suppresses causes, actions and diagnostic steps.
+Only `VERIFIED` cases with `retrieval_eligibility = 'eligible'` are eligible for trusted historical retrieval. The current dataset contains no such cases; demo mode is explicitly separate and suppresses causes, actions and diagnostic steps.
 
 ### Verification requirements & anti-poisoning controls
 
@@ -397,7 +397,7 @@ Operational Sense organizes diagnostic next checks into a **Falsification-Based 
 | Tier | Category | Effort/Risk Profile | Required Handling & Authority |
 |---|---|---|---|
 | **Tier 1** | **Lowest-Risk Visual / Sensory Check** | Lowest effort, zero mechanical disruption (e.g., check oil sight glass, inspect foundation bolts, check for unusual chatter or thermal discoloration). | Frontline technician executes and logs observation directly in PWA. |
-| **Tier 2** | **Non-Invasive Measurement** | Low effort, non-disruptive instrument reading (e.g., handheld infrared pyrometer reading, vibration pen velocity/acceleration, clamp meter current draw). | Frontline technician records calibrated measurement data. Some Tier 2 steps are isolation-sensitive: the V3 audit flags 13 for safety-officer review, so Tier 2 is not automatically safe; follow site procedures. |
+| **Tier 2** | **Non-Invasive Measurement** | Low effort, non-disruptive instrument reading (e.g., handheld infrared pyrometer reading, vibration pen velocity/acceleration, clamp meter current draw). | Frontline technician records calibrated measurement data. Some Tier 2 steps are isolation-sensitive: the dataset review flags 13 for safety-officer review, so Tier 2 is not automatically safe; follow site procedures. |
 | **Tier 3** | **Intrusive Action** | High effort, mechanical intervention with operational risk (e.g., disassemble bearing housing, replace mechanical seal, uncouple motor). | **Supervisor Approval Required.** Enforced at database level by the PostgreSQL check constraint `chk_tier3_needs_approval`; UI enforcement is planned and not yet built. |
 
 ### Safety rules
@@ -499,7 +499,7 @@ The application should request persistent storage where supported, monitor avail
 
 ## 11. Repository Structure
 
-The repository is intended to follow the modular monorepo structure below. It is a **proposed target**; the V3 Group 3 package currently has the layout `case_schema/`, `synthetic_dataset/`, `retrieval/`, `integration/`, `database/`, `poc/`, `tests/`, `documentation/`.
+The repository is intended to follow the modular monorepo structure below. It is a **proposed target** for the whole team; the AI & Retrieval deliverable currently uses the folders `case_schema/`, `synthetic_dataset/`, `retrieval/`, `integration/`, `poc/`, `tests/` and `documentation/` alongside the shared `database/` folder.
 
 ```text
 
@@ -761,7 +761,7 @@ chmod +x scripts/*.sh
 ./scripts/seed.sh               # loads reference data (3 classes, 30 components, 21 subsystems)
 ```
 
-These commands were taken from the V3 package (`database/README.md`, `database/scripts/`); they were **not re-run in the V3 audit** because no Docker/PostgreSQL endpoint was available. Run them on a disposable database first.
+These commands come from the project's `database/README.md` and `database/scripts/`; they were **not re-run during the AI & Retrieval review** because no Docker/PostgreSQL endpoint was available there. Run them on a disposable database first.
 
 See [`database/README.md`](database/README.md) for validation and reset instructions.
 
@@ -807,7 +807,7 @@ Sprint 4 proposes comparing hybrid retrieval against a PostgreSQL full-text-sear
 | Recall@3 | Proportion of test queries with at least one correct historical case in the top three. |
 | MRR | Mean reciprocal rank of the first correct result, using the same top-three cutoff. |
 
-The V3 package contains 17 structurally valid evaluation queries. Approved relevance labels and a keyword-search baseline are still required; the query file's presence is not a completed benchmark.
+The retrieval workstream contains 17 structurally valid evaluation queries. Approved relevance labels and a keyword-search baseline are still required; the query file's presence is not a completed benchmark.
 
 The technical proposal sets a target of more than 35% relative improvement in both Recall@3 and MRR over the baseline.
 
@@ -885,7 +885,7 @@ Detailed technical specifications are maintained separately from this README.
 | Testing and quality | `docs/07-testing-and-quality/` |
 | Agile and delivery | `docs/08-agile-and-delivery/` |
 | Deployment, operations and security operations | `docs/09-operations/` |
-| Current Group 3 reports (as delivered) | `Group_3_AI_Retrieval/documentation/`, `synthetic_dataset/`, `embedding_strategy/` |
+| Workstream reports (as delivered by each group) | Each group's report folder; AI & Retrieval: `documentation/`, `synthetic_dataset/`, `embedding_strategy/` |
 
 Major technical decisions should be recorded through Architecture Decision Records (ADRs), including the decision context, alternatives considered, rationale and consequences.
 
@@ -985,16 +985,16 @@ This repository distinguishes between:
 - **Target:** A measurable acceptance criterion awaiting evaluation.
 - **Deferred:** Intentionally outside the current MVP.
 
-### Group 3 V3 evidence and current limits (30 October 2026)
+### AI & Retrieval workstream (Group 3): evidence and current limits (30 October 2026)
 
-*Figures in this block are as of the `Group_3_AI_Retrieval_Final_v3` audit (2026-10-30) and will go stale; the authoritative values are in that package's `synthetic_dataset/` and `documentation/` reports.*
+*This block summarizes one workstream of the Sprint 1 team effort. Figures are as of the 2026-10-30 AI & Retrieval review and will go stale; the authoritative values are in that workstream's `synthetic_dataset/` and `documentation/` reports. Status for other workstreams is reported by their owning groups.*
 
 The following status is limited to the supplied `Group_3_AI_Retrieval_Final_v3` package and its technical review. It does not change or certify the work owned by Groups 1, 2 or 4.
 
-| Group 3 workstream | V3 evidence | Current status |
+| Group 3 workstream | Evidence | Current status |
 |---|---|---|
 | M07 — canonical case schema | JSON Schema v1.0.0, field definitions, validation rules, semantic validator and valid/invalid samples. | Implemented; Udit's owner acceptance and downstream contract confirmation pending. |
-| M08 — embeddings and retrieval | `intfloat/multilingual-e5-small` configured through sentence-transformers; configured dimension 384; E5 `query:` / `passage:` prefixes; L2 normalization; model/text provenance; pgvector cosine search and Top-3 code. | Code/configuration implemented; real model inference and actual 384-dimensional output not executed in the V3 audit. Aastha and Group 2 confirmation pending. |
+| M08 — embeddings and retrieval | `intfloat/multilingual-e5-small` configured through sentence-transformers; configured dimension 384; E5 `query:` / `passage:` prefixes; L2 normalization; model/text provenance; pgvector cosine search and Top-3 code. | Code/configuration implemented; real model inference and actual 384-dimensional output not yet executed. Aastha and Group 2 confirmation pending. |
 | M09 — synthetic case corpus | 50 unique synthetic cases: 17 pumps, 17 motors, 16 compressors; 350 ordered diagnostic steps; 19 illustrative model designations; 286 case-to-source links; 98 case-specific spare-part links. | Dataset delivered; quality/domain review partial. |
 | Dataset lifecycle | All 50 cases are `is_synthetic=true`, `DRAFT`, `demo_only_until_expert_review`, with verification `PENDING`. | No case is expert-approved or eligible for trusted retrieval. |
 | Offline retrieval demonstration | 50/50 cases prepared using 256-dimensional test-only mock vectors; demo mode returned mock Top-3 results; repeat mock ingestion created no duplicates. | Demonstration only. Mock scores are not meaningful real-model similarity results. |
@@ -1002,13 +1002,13 @@ The following status is limited to the supplied `Group_3_AI_Retrieval_Final_v3` 
 
 **Open M09 data-quality items:** 10 subsystem mappings remain unresolved; 11 component names and 11 taxonomy codes are missing; 15 cases are flagged for diagnostic-depth expansion; 127 measurement-location suggestions require verification and 14 measurement points remain pending; 13 Tier-2 isolation-sensitive steps need safety-officer review; 14 safety-reference rows are general guidance, not approved plant procedures; and all 50 acceptance criteria still require OEM/site baseline verification. Thirteen taxonomy cross-links are also marked ambiguous/provisional. These items must not be silently filled or treated as approved.
 
-**V3 test evidence:** `pytest` reported 270 passed / 3 skipped; `unittest` reported 273 tests OK / 3 skipped; static checks passed. These are separate test-run reports, not a count to add together. Three live-PostgreSQL tests were skipped in the fresh audit. Archived package evidence records PostgreSQL 16.15 + pgvector 0.8.0 runs with mock vectors only; the V3 audit did not execute real model inference or fresh live database verification.
+**Test evidence (AI & Retrieval):** `pytest` reported 270 passed / 3 skipped; `unittest` reported 273 tests OK / 3 skipped; static checks passed. These are separate test-run reports, not a count to add together. Three live-PostgreSQL tests were skipped in the fresh audit. Archived package evidence records PostgreSQL 16.15 + pgvector 0.8.0 runs with mock vectors only; the AI & Retrieval review did not execute real model inference or fresh live database verification.
 
-**Scope note:** Group 3 did not independently re-run or re-verify Group 2's database/RLS tests; any Group 2 figure quoted elsewhere in this README (for example RLS test counts or reference-data counts) is taken from Group 2's own reports and is not a Group 3 claim. Group 3 names its data as a project-local taxonomy and makes no ISO 14224 claim.
+**Scope note:** Each workstream's figures in this README come from that workstream's own reports. The AI & Retrieval review did not independently re-run other groups' tests (for example database/RLS tests), so figures from other groups are quoted, not re-verified here. The AI & Retrieval data uses a project-local taxonomy and makes no ISO 14224 claim.
 
 **Mock-vector detail:** the offline run used 256-dimensional test-only vectors; the archived PostgreSQL run used test-only mock vectors labelled 384-dimensional. Neither is a real model embedding.
 
-**Acceptance boundary:** Group 3 is internally reviewable but its V3 acceptance matrix is **PARTIAL — not Sprint 1 accepted**. Real 384-dimensional inference, real-vector ingestion/search, fresh live pgvector verification, approved evaluation relevance labels and baseline, owner confirmations, Group 1 domain decisions, and Group 4 independent QA remain pending. Similarity is not diagnosis.
+**Acceptance boundary:** The AI & Retrieval workstream is internally reviewable but its acceptance matrix is **PARTIAL — not Sprint 1 accepted**. Real 384-dimensional inference, real-vector ingestion/search, fresh live pgvector verification, approved evaluation relevance labels and baseline, owner confirmations, Group 1 domain decisions, and Group 4 independent QA remain pending. Similarity is not diagnosis.
 
 ### Current implementation state (Mapped to Phasing Roadmap)
 
@@ -1018,7 +1018,7 @@ The following status is limited to the supplied `Group_3_AI_Retrieval_Final_v3` 
 | Row-Level Security — 11/11 tests passing on a live database | Sprint 1 | ✅ Tested |
 | Reference seed data (ISO 14224: 3 equipment classes, 21 subsystems, 30 components) | Sprint 1 | ✅ Implemented |
 | Synthetic illustrative cases (50 cases + 350 tiered diagnostic steps; all DRAFT/demo-only) | Sprint 1 | 🟡 Dataset delivered; domain review partial |
-| Technology stack selected (Node.js + Express, React + TypeScript + Tailwind CSS); no Node.js/React code is part of the V3 Group 3 package | Sprint 1 | ✅ Confirmed |
+| Technology stack selected (Node.js + Express, React + TypeScript + Tailwind CSS)| Sprint 1 | ✅ Confirmed |
 | Backend framework wiring (Express, TypeScript compiler, linter, test runner) | Sprint 1 | 🔲 Active |
 | Mobile PWA shell & IndexedDB local voice buffer | Sprint 2 | 🔲 Planned |
 | Server-side speech-to-text (provider pending; Whisper under evaluation) & JSON extraction pipeline | Sprint 2 | 🔲 Planned |
