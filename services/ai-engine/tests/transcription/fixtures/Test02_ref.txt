@@ -1,0 +1,2 @@
+To main yah record kar raha hoon sirf testing ke liye ki jo bhi maine banaaya hai audio to text jo system se kaam kar rahe hain na English mein and accuracy kitni achi ho pa rahi hai
+

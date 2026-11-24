@@ -1,0 +1,4 @@
+audio,reference
+../tests/transcription/fixtures/operational_sense_hinglish.wav,To operational sense hamara ek aisa project hai jisme hum basically jo technician ke experience ko hum apne data me lenge and usse fir hum jo naya technician aayega basically to old technician ke experience ko usme hum implement karenge
+../tests/transcription/fixtures/Test01.wav,To operational sense hamaara ek aisa project hai jismen ham jo old technician ke experience apne data milenge and jo bhi naya technician aaega usko us data se help milegi jisse usne technician ko vaapas shuroo se start nahin karna hoga
+../tests/transcription/fixtures/Test02.wav,To main yah record kar raha hoon sirf testing ke liye ki jo bhi maine banaaya hai audio to text jo system se kaam kar rahe hain na English mein and accuracy kitni achi ho pa rahi hai
