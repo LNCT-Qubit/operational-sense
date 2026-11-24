@@ -1,1 +1,28 @@
-# Add pinned, reviewed dependencies when the AI-engine implementation is selected.
+# US-05 – Whisper Speech-to-Text Integration
+# Pin reviewed and tested dependencies.
+# CPU-first; no CUDA required.
+#
+# Tested environment:
+#   Python  : 3.14.7  (tags/v3.14.7:823f032, Aug 5 2026, cp314-win_amd64)
+#   Platform: Windows 10/11 x86-64
+#
+# Python 3.14.7 compatibility:
+#   numpy==2.5.4      (provides native cp314 wheels; numpy 2.2.1 lacks cp314 wheels)
+#   soundfile==0.14.0 (tested & compatible with Python 3.14)
+#   faster-whisper==1.1.0 (requires ctranslate2>=4.0; ctranslate2==4.8.5 provides cp314 wheels)
+
+# Core transcription engine (requires model download on first use)
+faster-whisper==1.1.0
+ctranslate2==4.8.5
+av==19.0.2
+
+# Runtime dependency of faster-whisper / huggingface-hub
+requests>=2.31.0
+
+# Audio I/O and resampling (used by audio decoder for format conversion)
+soundfile==0.14.0
+numpy==2.5.4
+
+# Testing
+pytest==8.3.4
+pytest-mock==3.14.0
