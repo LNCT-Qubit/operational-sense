@@ -14,6 +14,7 @@ import type { CaptureService } from './modules/recordings/recording.service';
 import type { AppConfig } from './config/env';
 import { corsAllowList } from './http/cors';
 import { createAuthHandlers } from './modules/users/auth.handlers';
+import type { LoginService } from './modules/users/login.service';
 import type { SignupService } from './modules/users/signup.service';
 
 export const serviceName = 'operational-sense-backend';
@@ -23,7 +24,7 @@ export interface AppDeps {
   service: CaptureService;
   logger: Logger;
   /** Public signup. Optional: when absent, the /auth routes are simply not mounted (keeps existing tests/wiring valid). */
-  signup?: { service: SignupService; corsAllowedOrigins: readonly string[] };
+  signup?: { service: SignupService; loginService?: LoginService; corsAllowedOrigins: readonly string[] };
   /** Resolves if the database answers; used by /health/ready. */
   ping: () => Promise<void>;
 }
@@ -43,8 +44,10 @@ export function createApp(deps: AppDeps) {
   if (deps.signup) {
     const authRouter = express.Router();
     authRouter.use(corsAllowList(deps.signup.corsAllowedOrigins) as any);
-    authRouter.use(express.json({ limit: '10kb' }));            // small cap: a signup form is tiny
-    authRouter.post('/signup', createAuthHandlers(deps.signup.service).signup as any);
+    authRouter.use(express.json({ limit: '10kb' }));            // small cap: signup/login forms are tiny
+    const authHandlers = createAuthHandlers(deps.signup.service, deps.signup.loginService);
+    authRouter.post('/signup', authHandlers.signup as any);
+    if (authHandlers.login) authRouter.post('/login', authHandlers.login as any);   // only when a LoginService is wired
     app.use(`${API_PREFIX}/auth`, authRouter);
   }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ApiRequestError, signupRequest } from '../api/auth';
+import { ApiRequestError, loginRequest, signupRequest, workspacePathForRole } from '../api/auth';
+import { clearSession, setSession } from '../api/session';
 
 export type UserRole = 'supervisor' | 'technician';
 export type AuthMode = 'login' | 'signup';
@@ -45,6 +46,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
+  const handleLogin = async () => {
+    setFormMessage(null);
+    setIsLoading(true);
+    try {
+      // Only email + password are sent. The backend looks the account up and decides the role.
+      const result = await loginRequest(email, password);
+      const target = workspacePathForRole(result.user.role);
+      if (!target) {
+        clearSession();
+        setFormMessage({ kind: 'error', text: 'Your account does not have a workspace in this app yet.' });
+        return;
+      }
+      setSession(result);          // token is kept in memory only (see api/session.ts)
+      setPassword('');
+      if (onAuthSuccess) {
+        onAuthSuccess(result.user.email, result.user.role === 'SUPERVISOR' ? 'supervisor' : 'technician', 'login');
+      }
+      navigate(target);            // workspace comes from the role stored in the database, never from the screen
+    } catch (err) {
+      const issues = err instanceof ApiRequestError ? err.fieldIssues : [];
+      const text = issues.length > 0 ? issues.join(' ') : err instanceof Error ? err.message : 'Sign-in failed. Please try again.';
+      setFormMessage({ kind: 'error', text });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAuthSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return; // ignore repeated submissions while a request is running
@@ -52,21 +80,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       void handleSignup();
       return;
     }
-    setFormMessage(null);
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      if (onAuthSuccess) {
-        onAuthSuccess(email, selectedRole, authMode);
-      }
-
-      if (selectedRole === 'supervisor') {
-        navigate('/supervisor');
-      } else {
-        navigate('/technician');
-      }
-    }, 350);
+    void handleLogin();
   };
 
   const bgImageUrl =
@@ -247,6 +261,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
           </div>
 
+          {/* Role picker is for SIGN UP only. At login the role comes from the database, never from this screen. */}
+          {authMode === 'signup' && (
+            <>
           {/* ========================================================= */}
           {/* ROLE SELECTOR (Supervisor vs Technician)                  */}
           {/* ========================================================= */}
@@ -302,6 +319,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </button>
             </div>
           </div>
+            </>
+          )}
 
           {/* FORM */}
           <form onSubmit={handleAuthSubmit} className="mt-4 space-y-3.5">
@@ -346,7 +365,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               />
             </div>
 
-            {/* Result of the last sign-up attempt (renders only after one) */}
+            {/* Result of the last sign-up / sign-in attempt (renders only after one) */}
             {formMessage && (
               <p
                 role={formMessage.kind === 'error' ? 'alert' : 'status'}
@@ -362,17 +381,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               disabled={isLoading}
               className="w-full text-white font-bold py-3 px-4 rounded-xl text-center text-sm transition-all duration-200 mt-5 shadow-md active:scale-[0.99] disabled:opacity-70 cursor-pointer flex items-center justify-center gap-2"
               style={{
-                backgroundColor: selectedRole === 'supervisor' ? '#08677A' : '#F47720',
+                backgroundColor: authMode === 'login' || selectedRole === 'supervisor' ? '#08677A' : '#F47720',
               }}
             >
               {isLoading ? (
-                <span>Authorizing…</span>
+                <span>{authMode === 'login' ? 'Signing in…' : 'Authorizing…'}</span>
               ) : (
                 <>
                   <span>
                     {authMode === 'signup'
                       ? `Sign Up as ${selectedRole === 'supervisor' ? 'Supervisor' : 'Technician'}`
-                      : `Enter ${selectedRole === 'supervisor' ? 'Supervisor Workspace' : 'Technician Portal'}`}
+                      : 'Sign In'}
                   </span>
                   <span>&rarr;</span>
                 </>

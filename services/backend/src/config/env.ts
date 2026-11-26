@@ -16,6 +16,8 @@ export interface AppConfig {
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   /** Public signup (POST /auth/signup). The organization is chosen HERE, never by the browser. */
   signup: { organizationName: string; bcryptRounds: number; corsAllowedOrigins: string[] };
+  /** Login (POST /auth/login). `tokenTtlSeconds` = lifetime of the JWT access token. */
+  login: { tokenTtlSeconds: number };
 }
 
 const DEFAULT_MIME =
@@ -72,6 +74,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       organizationName: (env.SIGNUP_ORG_NAME || 'Demo Org').trim(),
       bcryptRounds: int(env, 'BCRYPT_ROUNDS', 12, 10, 15, errors),
       corsAllowedOrigins: (env.CORS_ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
+    },
+    login: {
+      // 8 hours = one work shift. Allowed range: 60 s .. 7 days.
+      tokenTtlSeconds: int(env, 'JWT_EXPIRES_IN_SECONDS', 28800, 60, 604800, errors),
     },
   };
   if (cfg.signup.organizationName === '') errors.push('SIGNUP_ORG_NAME must not be blank');
