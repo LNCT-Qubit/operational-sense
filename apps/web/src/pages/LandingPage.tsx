@@ -21,6 +21,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('supervisor');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formMessage, setFormMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
@@ -353,17 +354,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Password Input */}
-            <div>
-              <label className="block text-xs font-semibold text-[#64747C] mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={authMode === 'signup' ? 'Create a secure password' : 'Enter your password'}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#D5E0E5] bg-white text-[#132535] outline-none transition focus:border-[#08677A] focus:ring-2 focus:ring-[#08677A]/20"
-                required
-              />
-            </div>
+            {/* Password Input */}
+<div>
+  <label className="block text-xs font-semibold text-[#64747C] mb-1">Password</label>
+
+  <div className="relative">
+    <input
+      type={showPassword ? 'text' : 'password'}
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      placeholder={authMode === 'signup' ? 'Create a secure password' : 'Enter your password'}
+      className="w-full px-3.5 py-2.5 pr-11 text-sm rounded-xl border border-[#D5E0E5] bg-white text-[#132535] outline-none transition focus:border-[#08677A] focus:ring-2 focus:ring-[#08677A]/20"
+      required
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowPassword((current) => !current)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64747C] hover:text-[#08677A]"
+      aria-label={showPassword ? 'Hide password' : 'Show password'}
+    >
+      {showPassword ? (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.2A10.9 10.9 0 0112 5c5 0 9.3 3.1 11 7-0.7 1.7-1.9 3.1-3.4 4.3M6.2 6.2C4.4 7.3 3.1 9 2 12c1.7 3.9 6 7 10 7 1.2 0 2.3-.2 3.3-.6" />
+        </svg>
+      ) : (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+          <circle cx="12" cy="12" r="3" strokeWidth="2" />
+        </svg>
+      )}
+    </button>
+  </div>
+</div>
 
             {/* Result of the last sign-up / sign-in attempt (renders only after one) */}
             {formMessage && (
