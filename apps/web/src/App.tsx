@@ -1,5 +1,7 @@
 import React from 'react';
 import { Outlet, Route, Routes, useLocation, Navigate } from 'react-router'
+import { getCurrentUser } from './api/session';
+import type { BackendRole } from './api/auth';
 import LandingPage from './pages/LandingPage';
 import Header from './component/supervisorComponent/Header'
 import MobileNav from './component/supervisorComponent/MobileNav'
@@ -16,6 +18,15 @@ function pageTitle(path: string) {
   if (path.includes('/decide')) return 'Approve / Reject'
   if (path.includes('/profile')) return 'Profile'
   return 'Dashboard'
+}
+
+function RequireRole({ allowed }: { allowed: BackendRole[] }) {
+  const user = getCurrentUser();
+  if (!user) return <Navigate to="/" replace />;
+  if (!allowed.includes(user.role)) {
+    return <Navigate to={user.role === 'SUPERVISOR' ? '/supervisor' : '/technician'} replace />;
+  }
+  return <Outlet />;
 }
 
 function Layout() {
@@ -46,23 +57,26 @@ export const App: React.FC = () => {
         <Route path="/signup" element={<LandingPage initialMode="signup" />} />
         <Route path="/register" element={<LandingPage initialMode="signup" />} />
 
-        {/* Supervisor Workspace Routes */}
-        <Route path="/supervisor" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="queue" element={<ReviewQueue />} />
-          <Route path="decide/:id?" element={<ApproveReject />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        {/* Backward-compatible root-level supervisor routes */}
-        <Route element={<Layout />}>
-          <Route path="/queue" element={<ReviewQueue />} />
-          <Route path="/decide/:id?" element={<ApproveReject />} />
-          <Route path="/profile" element={<Profile />} />
+        {/* Supervisor routes are protected by the authenticated database role. */}
+        <Route element={<RequireRole allowed={['SUPERVISOR']} />}>
+          <Route path="/supervisor" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="queue" element={<ReviewQueue />} />
+            <Route path="decide/:id?" element={<ApproveReject />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+          {/* Backward-compatible root-level supervisor routes */}
+          <Route element={<Layout />}>
+            <Route path="/queue" element={<ReviewQueue />} />
+            <Route path="/decide/:id?" element={<ApproveReject />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
         </Route>
 
         {/* Technician Portal */}
-        <Route path="/technician" element={<TechnicianPage />} />
+        <Route element={<RequireRole allowed={['TECHNICIAN']} />}>
+          <Route path="/technician" element={<TechnicianPage />} />
+        </Route>
 
         {/* Fallback to Landing Page */}
         <Route path="*" element={<Navigate to="/" replace />} />
