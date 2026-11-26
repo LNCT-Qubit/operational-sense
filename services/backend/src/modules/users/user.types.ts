@@ -30,4 +30,34 @@ export interface UserStore {
 
 export interface PasswordHasher {
   hash(plain: string): Promise<string>;
+  /** True only if `plain` matches the stored bcrypt `hash`. Never throws for a malformed hash: returns false. */
+  compare(plain: string, hash: string): Promise<boolean>;
+}
+
+/**
+ * Everything login needs about an account. Includes passwordHash, so this type lives ONLY between the
+ * repository and LoginService: it is never serialised into an API response (see PublicLoginUser below).
+ */
+export interface LoginRecord {
+  id: string;
+  organizationId: string;
+  name: string;
+  email: string;
+  role: Role;
+  passwordHash: string;
+  isActive: boolean;
+}
+
+/** Storage port for login (separate from UserStore so signup code and its tests are untouched). */
+export interface LoginStore {
+  /** Finds the account by normalised email. Resolves the organization itself. Null when no such account. */
+  findLoginRecord(email: string): Promise<LoginRecord | null>;
+}
+
+/** What the login response may reveal about the account. */
+export interface PublicLoginUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
 }

@@ -28,7 +28,10 @@ class MemStore implements UserStore {
     return { created: true as const, user: { id, name: u.name, email: u.email, role: u.role, created_at: new Date().toISOString() } as PublicUser };
   }
 }
-const fakeHasher = { hash: async (p: string) => `$2b$12$fakehash${Buffer.from(p).toString('base64')}` };
+const fakeHasher = {
+  hash: async (p: string) => `$2b$12$fakehash${Buffer.from(p).toString('base64')}`,
+  compare: async (p: string, h: string) => h === `$2b$12$fakehash${Buffer.from(p).toString('base64')}`,
+};
 const rig = () => { const store = new MemStore(); return { store, svc: new SignupService(store, fakeHasher, { organizationName: 'Demo Org' }, silentLogger) }; };
 const details = (e: any) => (e.details as { field: string }[]).map((d) => d.field).sort();
 

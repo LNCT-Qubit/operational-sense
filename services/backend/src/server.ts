@@ -11,6 +11,7 @@ import { createApp } from './app';
 import { PostgresUserStore } from './modules/users/user.repository';
 import { createBcryptHasher } from './modules/users/password-hasher';
 import { SignupService } from './modules/users/signup.service';
+import { LoginService } from './modules/users/login.service';
 
 async function main(): Promise<void> {
   try { require('dotenv').config(); } catch { /* dotenv is optional: real environments inject variables */ }
@@ -34,7 +35,9 @@ async function main(): Promise<void> {
   );
 
   const userStore = new PostgresUserStore(pool);
-  const signupService = new SignupService(userStore, createBcryptHasher(config.signup.bcryptRounds), { organizationName: config.signup.organizationName }, logger);
+  const hasher = createBcryptHasher(config.signup.bcryptRounds);   // one hasher shared by signup (hash) and login (compare)
+  const signupService = new SignupService(userStore, hasher, { organizationName: config.signup.organizationName }, logger);
+  const loginService = new LoginService(userStore, hasher, { jwtSecret: config.jwtSecret, tokenTtlSeconds: config.login.tokenTtlSeconds }, logger);
   // Friendly startup hint for beginners: signup cannot work until migration 010 has created the organization.
   try {
     if (!(await userStore.resolveSignupOrgId(config.signup.organizationName))) {
@@ -42,7 +45,7 @@ async function main(): Promise<void> {
     }
   } catch { logger.warn('could not check the signup organization: has migration 010_users.sql been applied?'); }
 
-  const app = createApp({ config, service, logger, signup: { service: signupService, corsAllowedOrigins: config.signup.corsAllowedOrigins }, ping: async () => { await pool.query('SELECT 1'); } });
+  const app = createApp({ config, service, logger, signup: { service: signupService, loginService, corsAllowedOrigins: config.signup.corsAllowedOrigins }, ping: async () => { await pool.query('SELECT 1'); } });
   const server = app.listen(config.port, () => logger.info('backend listening', { port: config.port }));
 
   const shutdown = async (signal: string) => {

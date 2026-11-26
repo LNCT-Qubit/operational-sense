@@ -9,5 +9,16 @@ import type { PasswordHasher } from './user.types';
 export function createBcryptHasher(rounds: number): PasswordHasher {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const bcrypt = require('bcryptjs');
-  return { hash: (plain: string) => bcrypt.hash(plain, rounds) as Promise<string> };
+  return {
+    hash: (plain: string) => bcrypt.hash(plain, rounds) as Promise<string>,
+    // bcrypt.compare re-hashes `plain` with the salt and cost stored INSIDE `hash` and compares the results in
+    // constant time. We never hash the login password ourselves and compare strings.
+    compare: async (plain: string, hash: string) => {
+      try {
+        return (await bcrypt.compare(plain, hash)) === true;
+      } catch {
+        return false; // malformed hash in the database must look like "wrong password", not crash the request
+      }
+    },
+  };
 }
