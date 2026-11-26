@@ -1,0 +1,292 @@
+
+.profile-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 30px;
+}
+
+/* Page heading */
+
+.profile-heading {
+  margin-bottom: 28px;
+  padding: 0 4px;
+}
+
+.profile-heading h2 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.profile-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+/* Technician profile card */
+
+.profile-card {
+  width: 100%;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 30px 36px;
+  margin: 0 0 26px;
+  background: #f1f3f3;
+  border: 1px solid #d5dedd;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(24, 54, 59, 0.04);
+}
+
+.profile-avatar {
+  width: 82px;
+  height: 82px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e9e8;
+  color: var(--brand-800);
+  border: 1px solid #d0ddda;
+  border-radius: 50%;
+}
+
+.profile-avatar svg {
+  width: 39px;
+  height: 39px;
+}
+
+.profile-identity {
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.profile-identity h3 {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.profile-role {
+  margin: 0 0 13px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+/* Online and offline status */
+
+.profile-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.status-indicator.online {
+  background-color: #238653;
+  border: 1px solid #176b40;
+}
+
+.status-indicator.offline {
+  background-color: #c64b46;
+  border: 1px solid #a63732;
+}
+
+/* Contact details card */
+
+.contact-card {
+  width: 100%;
+  padding: 30px 36px;
+  margin: 0;
+  background: #f1f3f3;
+  border: 1px solid #d5dedd;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(24, 54, 59, 0.04);
+}
+
+.contact-heading {
+  margin-bottom: 28px;
+}
+
+.contact-heading h3 {
+  margin: 0 0 7px;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.contact-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Contact information rows */
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  padding: 10px 0;
+}
+
+.contact-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e3ecea;
+  color: var(--brand-800);
+  border: 1px solid #d4e1de;
+  border-radius: 9px;
+}
+
+.contact-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.contact-info {
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.contact-info span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.contact-info p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.contact-divider {
+  height: 1px;
+  margin: 17px 0;
+  background: #d5dedd;
+}
+
+/* Footer */
+
+.profile-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 20px 4px 0;
+  border-top: 1px solid #e0e6e5;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Tablet */
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 16px 12px 90px;
+  }
+
+  .profile-heading {
+    margin-bottom: 22px;
+  }
+
+  .profile-heading h2 {
+    font-size: 25px;
+  }
+
+  .profile-card {
+    min-height: 140px;
+    gap: 20px;
+    padding: 25px;
+    margin-bottom: 20px;
+  }
+
+  .profile-avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile-avatar svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .profile-identity h3 {
+    font-size: 19px;
+  }
+
+  .contact-card {
+    padding: 26px 25px;
+  }
+}
+
+/* Small mobile screens */
+
+@media (max-width: 420px) {
+  .profile-page {
+    padding: 14px 8px 90px;
+  }
+
+  .profile-card {
+    gap: 15px;
+    padding: 22px 18px;
+  }
+
+  .profile-avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-avatar svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile-identity h3 {
+    font-size: 17px;
+  }
+
+  .contact-card {
+    padding: 23px 18px;
+  }
+
+  .contact-item {
+    gap: 13px;
+  }
+
+  .contact-info p {
+    font-size: 14px;
+  }
+
+  .profile-footer {
+    flex-direction: column;
+    gap: 7px;
+  }
+}
