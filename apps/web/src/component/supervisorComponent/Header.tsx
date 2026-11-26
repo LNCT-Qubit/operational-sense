@@ -1,10 +1,14 @@
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useNavigate } from 'react-router'
+import { clearSession, getCurrentUser } from '../../api/session'
 import Brand from './Brand'
 import { Icon } from './Icons'
 import NetworkStatus from './NetworkStatus'
 import { navLinks } from './nav'
 
 export default function Header() {
+  const navigate = useNavigate()
+  const user = getCurrentUser()
+  const logout = () => { clearSession(); navigate('/', { replace: true }) }
   return (
     <header className="topbar">
       <div className="topbar-brand">
@@ -23,6 +27,7 @@ export default function Header() {
       </nav>
       <div className="topbar-status">
         <NetworkStatus />
+        {user && <button type="button" className="top-link" onClick={logout} aria-label="Log out">Log out</button>}
 
         {/* <Link to="/" className="top-link exit-btn" style={{ marginLeft: '10px' }} title="Return to Landing Page">
           <Icon name="close" />

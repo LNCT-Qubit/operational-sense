@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { clearSession, getCurrentUser } from '../api/session';
 import { formatDuration, useAudioRecorder } from '../features/useAudioRecorder';
 import { deleteDraft, getDrafts, saveDraft, type TechnicianDraft } from '../features/draftStore';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -43,6 +44,9 @@ function Header({
   draftsCount: number;
   navigate: (page: Page) => void;
 }) {
+  const navigateToRoute = useNavigate();
+  const currentUser = getCurrentUser();
+  const logout = () => { clearSession(); navigateToRoute('/', { replace: true }); };
   const links: { id: Page; label: string; icon: 'mic' | 'file' | 'search' | 'user' }[] = [
     { id: 'capture', label: 'Capture', icon: 'mic' },
     { id: 'drafts', label: `Drafts${draftsCount > 0 ? ` (${draftsCount})` : ''}`, icon: 'file' },
@@ -74,6 +78,7 @@ function Header({
 
       <div className="topbar-status">
         <Status online={online} />
+        {currentUser && <button type="button" className="top-link" onClick={logout}>Log out</button>}
         <span className="sync-state">
           <Icon name="refresh" /> Sync idle
         </span>
