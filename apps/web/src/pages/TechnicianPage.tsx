@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { clearSession, getCurrentUser } from '../api/session';
@@ -9,6 +10,7 @@ import { Icon } from '../component/technicainComponent/Icons';
 
 type Page = 'capture' | 'drafts' | 'search' | 'profile';
 type Draft = TechnicianDraft;
+type CaptureStage = 'capture' | 'review' | 'processing' | 'success';
 
 const emptyDraft = (): Pick<Draft, 'observation' | 'equipment' | 'subsystem' | 'symptom' | 'cause' | 'action' | 'parts' | 'safety' | 'mode' | 'duration'> => ({
   observation: '',
@@ -150,6 +152,16 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [stage, setStage] = useState<CaptureStage>('capture');
+  const [processingStep, setProcessingStep] = useState(0);
+  const [referenceId, setReferenceId] = useState('');
+
+  const processingSteps = [
+    'Analyzing observation',
+    'Preparing transcription',
+    'Detecting sentiment',
+    'Extracting information',
+  ];
 
   const recording = recorder.status === 'recording';
   const paused = recorder.status === 'paused';
@@ -162,13 +174,18 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
   const save = async () => {
     if (!form.observation.trim() && !form.symptom.trim() && !recorder.audioBlob && files.length === 0) {
       setMessage('Add an observation, record audio, or attach media before saving.');
+      setStage('review');
       return;
     }
+
     setSaving(true);
+
+    const draftId = crypto.randomUUID();
+
     try {
       await onSave({
         ...form,
-        id: crypto.randomUUID(),
+        id: draftId,
         date: new Date().toISOString(),
         mode: mode === 'voice' ? 'Voice' : 'Text',
         duration: recorder.durationMs,
@@ -182,340 +199,605 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
         })),
         syncStatus: 'local',
       });
-      setMessage('Draft and media saved securely on this device.');
+
+      setReferenceId(draftId);
       setForm(emptyDraft());
       setFiles([]);
       recorder.discardRecording();
+      setStage('success');
     } catch {
       setMessage('Could not save this draft. Check available device storage and try again.');
+      setStage('review');
     } finally {
       setSaving(false);
     }
   };
 
-  const confirm = () => {
+  const startProcessing = async () => {
+    if (!form.observation.trim() && !form.symptom.trim() && !recorder.audioBlob && files.length === 0) {
+      setMessage('Add an observation, record audio, or attach media before continuing.');
+      return;
+    }
+
     setConfirmed(true);
-    setMessage('Review marked as confirmed.');
+    setMessage('');
+    setProcessingStep(0);
+    setStage('processing');
+
+    for (let i = 0; i < processingSteps.length; i++) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 1400));
+      setProcessingStep(i + 1);
+    }
+
+    await save();
   };
 
   return (
     <>
+      <style>
+        {`
+          @keyframes technicianSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+
+          @keyframes technicianPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+          }
+
+          .technician-processing-spinner {
+            display: inline-flex;
+            animation: technicianSpin 1.2s linear infinite;
+          }
+
+          .technician-processing-active {
+            animation: technicianPulse 1.5s ease-in-out infinite;
+          }
+
+          .technician-flow-panel {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+          }
+
+          .technician-processing-content {
+            padding: 28px 10px;
+            text-align: center;
+          }
+
+          .technician-processing-main-icon {
+            width: 66px;
+            height: 66px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff1e8;
+            color: #f47720;
+            font-size: 28px;
+          }
+
+          .technician-processing-list {
+            max-width: 540px;
+            margin: 30px auto 0;
+            text-align: left;
+          }
+
+          .technician-processing-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 15px 16px;
+            border-bottom: 1px solid #e8eef1;
+          }
+
+          .technician-processing-item:last-child {
+            border-bottom: none;
+          }
+
+          .technician-processing-status {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+          }
+
+          .technician-processing-status.completed {
+            color: #168653;
+            background: #e7f6ed;
+          }
+
+          .technician-processing-status.active {
+            color: #f47720;
+            background: #fff1e8;
+          }
+
+          .technician-processing-status.pending {
+            color: #9aa8ae;
+            background: #f0f3f5;
+          }
+
+          .technician-success-icon {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e7f6ed;
+            color: #168653;
+            font-size: 30px;
+          }
+
+          .technician-reference {
+            margin: 22px auto;
+            padding: 14px;
+            max-width: 460px;
+            border: 1px solid #e3e9ec;
+            border-radius: 10px;
+            background: #f5f8fa;
+            overflow-wrap: anywhere;
+          }
+
+          .technician-flow-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+          }
+
+          @media (max-width: 600px) {
+            .technician-flow-panel {
+              padding: 18px;
+            }
+
+            .technician-flow-actions {
+              flex-direction: column;
+            }
+
+            .technician-flow-actions button {
+              width: 100%;
+            }
+          }
+        `}
+      </style>
+
       <PageIntro
         title="Technician capture — Field Note"
         description="Record a voice note or enter text, add context, and attach media as needed."
       />
-      <div className="capture-layout">
-        <section className="panel capture-panel">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">STEP 01</span>
-              <h2>Capture observation</h2>
-              <p>Start with what you noticed in the field.</p>
+
+      <div
+        className="capture-layout"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+        }}
+      >
+        {stage === 'capture' && (
+          <section className="panel capture-panel technician-flow-panel">
+            <div className="section-heading">
+              <div>
+                <h2>Capture observation</h2>
+                <p>Start with what you noticed in the field.</p>
+              </div>
+              <span className="required-tag">30 sec max</span>
             </div>
-            <span className="required-tag">30 sec max</span>
-          </div>
 
-          <div className="mode-switch">
-            <button
-              type="button"
-              className={mode === 'voice' ? 'selected' : ''}
-              onClick={() => setMode('voice')}
-            >
-              <Icon name="mic" /> Voice
-            </button>
-            <button
-              type="button"
-              className={mode === 'text' ? 'selected' : ''}
-              onClick={() => setMode('text')}
-            >
-              <Icon name="file" /> Text
-            </button>
-          </div>
-
-          {mode === 'voice' && (
-            <div className={`voice-recorder ${recording ? 'recording' : ''} ${paused ? 'paused' : ''}`}>
+            <div className="mode-switch">
               <button
                 type="button"
-                className={`mic-button ${recording ? 'live' : ''}`}
-                onClick={() => void recorder.startRecording()}
-                disabled={recording || paused || requesting || preview}
-                aria-label="Start voice recording"
+                className={mode === 'voice' ? 'selected' : ''}
+                onClick={() => setMode('voice')}
               >
-                <Icon name="mic" />
+                <Icon name="mic" /> Voice
               </button>
-              <div className="timer-block">
-                <strong>
-                  {formatDuration(recorder.durationMs)} <small>/ 00:30</small>
-                </strong>
-                <span>
-                  {requesting
-                    ? 'Requesting microphone access…'
-                    : recording
-                      ? 'Recording in progress'
-                      : paused
-                        ? 'Recording paused'
-                        : preview
-                          ? 'Preview ready'
-                          : recorder.status === 'error'
-                            ? 'Microphone needs attention'
-                            : 'Ready when you are'}
-                </span>
-                <div className="progress-track">
-                  <i style={{ width: `${Math.min(100, (recorder.durationMs / 30000) * 100)}%` }} />
+              <button
+                type="button"
+                className={mode === 'text' ? 'selected' : ''}
+                onClick={() => setMode('text')}
+              >
+                <Icon name="file" /> Text
+              </button>
+            </div>
+
+            {mode === 'voice' && (
+              <div className={`voice-recorder ${recording ? 'recording' : ''} ${paused ? 'paused' : ''}`}>
+                <button
+                  type="button"
+                  className={`mic-button ${recording ? 'live' : ''}`}
+                  onClick={() => void recorder.startRecording()}
+                  disabled={recording || paused || requesting || preview}
+                  aria-label="Start voice recording"
+                >
+                  <Icon name="mic" />
+                </button>
+                <div className="timer-block">
+                  <strong>
+                    {formatDuration(recorder.durationMs)} <small>/ 00:30</small>
+                  </strong>
+                  <span>
+                    {requesting
+                      ? 'Requesting microphone access…'
+                      : recording
+                        ? 'Recording in progress'
+                        : paused
+                          ? 'Recording paused'
+                          : preview
+                            ? 'Preview ready'
+                            : recorder.status === 'error'
+                              ? 'Microphone needs attention'
+                              : 'Ready when you are'}
+                  </span>
+                  <div className="progress-track">
+                    <i style={{ width: `${Math.min(100, (recorder.durationMs / 30000) * 100)}%` }} />
+                  </div>
                 </div>
-              </div>
-              <div className="voice-actions">
-                {requesting && (
-                  <button type="button" className="button-primary" disabled>
-                    Starting…
-                  </button>
-                )}
-                {recording && (
-                  <>
-                    <button type="button" className="button-light" onClick={recorder.pauseRecording}>
-                      <Icon name="pause" /> Pause
+                <div className="voice-actions">
+                  {requesting && (
+                    <button type="button" className="button-primary" disabled>
+                      Starting…
                     </button>
-                    <button type="button" className="button-danger" onClick={recorder.stopRecording}>
-                      <Icon name="stop" /> Finish
+                  )}
+                  {recording && (
+                    <>
+                      <button type="button" className="button-light" onClick={recorder.pauseRecording}>
+                        <Icon name="pause" /> Pause
+                      </button>
+                      <button type="button" className="button-danger" onClick={recorder.stopRecording}>
+                        <Icon name="stop" /> Finish
+                      </button>
+                    </>
+                  )}
+                  {paused && (
+                    <>
+                      <button type="button" className="button-primary" onClick={recorder.resumeRecording}>
+                        <Icon name="play" /> Resume
+                      </button>
+                      <button type="button" className="button-danger" onClick={recorder.stopRecording}>
+                        <Icon name="stop" /> Finish
+                      </button>
+                    </>
+                  )}
+                  {preview && (
+                    <button type="button" className="button-light" onClick={recorder.discardRecording}>
+                      <Icon name="refresh" /> Record again
                     </button>
-                  </>
-                )}
-                {paused && (
-                  <>
-                    <button type="button" className="button-primary" onClick={recorder.resumeRecording}>
-                      <Icon name="play" /> Resume
-                    </button>
-                    <button type="button" className="button-danger" onClick={recorder.stopRecording}>
-                      <Icon name="stop" /> Finish
-                    </button>
-                  </>
-                )}
-                {preview && (
-                  <button type="button" className="button-light" onClick={recorder.discardRecording}>
-                    <Icon name="refresh" /> Record again
-                  </button>
-                )}
-                {!recording && !paused && !requesting && !preview && (
-                  <button
-                    type="button"
-                    className="button-primary"
-                    onClick={() => void recorder.startRecording()}
-                  >
-                    <Icon name="mic" />
-                    {recorder.status === 'error' ? 'Try again' : 'Start recording'}
-                  </button>
-                )}
-              </div>
-              {recorder.errorMessage && <p className="error-message">{recorder.errorMessage}</p>}
-              {preview && recorder.audioUrl && (
-                <div className="audio-preview">
-                  <audio controls src={recorder.audioUrl} />
-                  <a href={recorder.audioUrl} download="workshop-note-audio.webm">
-                    <Icon name="download" /> Download audio
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="context-fields">
-            <label className="field">
-              <span>
-                Asset context <small>(optional)</small>
-              </span>
-              <div className="input-icon">
-                <Icon name="search" />
-                <input
-                  placeholder="Search or select asset…"
-                  value={form.equipment}
-                  onChange={(e) => update('equipment', e.target.value)}
-                />
-                <Icon name="chevron" />
-              </div>
-            </label>
-
-            <div className="field-row">
-              <Field
-                label="Equipment class"
-                value={form.subsystem}
-                onChange={(value) => update('subsystem', value)}
-                placeholder="Select equipment class…"
-              />
-              <Field
-                label="Subsystem"
-                value={form.symptom}
-                onChange={(value) => update('symptom', value)}
-                placeholder="Select subsystem…"
-              />
-            </div>
-
-            <div className="attach-row">
-              <strong>
-                <Icon name="paperclip" /> Attach media <small>(optional)</small>
-              </strong>
-              <label className="attach-button">
-                <Icon name="camera" /> Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) =>
-                    setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
-                  }
-                />
-              </label>
-              <label className="attach-button">
-                <Icon name="video" /> Video
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) =>
-                    setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
-                  }
-                />
-              </label>
-              <label className="attach-button">
-                <Icon name="mic" /> Audio
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) =>
-                    setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
-                  }
-                />
-              </label>
-            </div>
-
-            {files.length > 0 && (
-              <div className="attached-files">
-                {files.map((file, index) => (
-                  <span key={`${file.name}-${index}`}>
-                    {file.name}
+                  )}
+                  {!recording && !paused && !requesting && !preview && (
                     <button
                       type="button"
-                      aria-label={`Remove ${file.name}`}
-                      onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                      className="button-primary"
+                      onClick={() => void recorder.startRecording()}
                     >
-                      ×
+                      <Icon name="mic" />
+                      {recorder.status === 'error' ? 'Try again' : 'Start recording'}
                     </button>
-                  </span>
-                ))}
+                  )}
+                </div>
+                {recorder.errorMessage && <p className="error-message">{recorder.errorMessage}</p>}
+                {preview && recorder.audioUrl && (
+                  <div className="audio-preview">
+                    <audio controls src={recorder.audioUrl} />
+                    <a href={recorder.audioUrl} download="workshop-note-audio.webm">
+                      <Icon name="download" /> Download audio
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
-            <Field
-              label="Observation"
-              value={form.observation}
-              onChange={(value) => update('observation', value)}
-              placeholder="Type or transcribe your observation here…"
-              multiline
-            />
-          </div>
+            <div className="context-fields">
+              <label className="field">
+                <span>
+                  Asset context <small>(optional)</small>
+                </span>
+                <div className="input-icon">
+                  <Icon name="search" />
+                  <input
+                    placeholder="Search or select asset…"
+                    value={form.equipment}
+                    onChange={(e) => update('equipment', e.target.value)}
+                  />
+                  <Icon name="chevron" />
+                </div>
+              </label>
 
-          <button
-            type="button"
-            className="button-primary save-button"
-            onClick={() => void save()}
-            disabled={saving}
-          >
-            <Icon name="file" /> {saving ? 'Saving draft…' : 'Save locally as draft'}
-          </button>
-          <p className="storage-hint">
-            Text, voice recordings, and attached media are stored on this device for offline recovery.
-          </p>
+              <div className="field-row">
+                <Field
+                  label="Equipment class"
+                  value={form.subsystem}
+                  onChange={(value) => update('subsystem', value)}
+                  placeholder="Select equipment class…"
+                />
+                <Field
+                  label="Subsystem"
+                  value={form.symptom}
+                  onChange={(value) => update('symptom', value)}
+                  placeholder="Select subsystem…"
+                />
+              </div>
 
-          {message && (
-            <p
-              className={
-                message.startsWith('Draft') || message.startsWith('Review')
-                  ? 'success-message'
-                  : 'form-message'
-              }
-              role="status"
-            >
-              {message}
-            </p>
-          )}
-        </section>
+              <div className="attach-row">
+                <strong>
+                  <Icon name="paperclip" /> Attach media <small>(optional)</small>
+                </strong>
+                <label className="attach-button">
+                  <Icon name="camera" /> Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) =>
+                      setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
+                    }
+                  />
+                </label>
+                <label className="attach-button">
+                  <Icon name="video" /> Video
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) =>
+                      setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
+                    }
+                  />
+                </label>
+                <label className="attach-button">
+                  <Icon name="mic" /> Audio
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) =>
+                      setFiles((current) => [...current, ...Array.from(e.target.files ?? [])])
+                    }
+                  />
+                </label>
+              </div>
 
-        <section className="panel review-panel">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">STEP 02</span>
-              <h2>Post-capture review</h2>
-              <p>Review the captured information and complete the fields below.</p>
+              {files.length > 0 && (
+                <div className="attached-files">
+                  {files.map((file, index) => (
+                    <span key={`${file.name}-${index}`}>
+                      {file.name}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${file.name}`}
+                        onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <Field
+                label="Observation"
+                value={form.observation}
+                onChange={(value) => update('observation', value)}
+                placeholder="Type or transcribe your observation here…"
+                multiline
+              />
             </div>
-            <span className={confirmed ? 'review-badge confirmed' : 'review-badge'}>
-              {confirmed ? 'Confirmed' : 'Needs review'}
-            </span>
-          </div>
 
-          <div className="review-fields">
-            <Field
-              label="Equipment"
-              value={form.equipment}
-              onChange={(value) => update('equipment', value)}
-              placeholder="Enter equipment"
-            />
-            <Field
-              label="Subsystem"
-              value={form.subsystem}
-              onChange={(value) => update('subsystem', value)}
-              placeholder="Enter subsystem"
-            />
-            <Field
-              label="Symptom"
-              value={form.symptom}
-              onChange={(value) => update('symptom', value)}
-              placeholder="Describe the symptom"
-            />
-            <Field
-              label="Probable cause"
-              value={form.cause}
-              onChange={(value) => update('cause', value)}
-              placeholder="Add probable cause"
-            />
-            <Field
-              label="Action taken"
-              value={form.action}
-              onChange={(value) => update('action', value)}
-              placeholder="Describe action taken"
-            />
-            <Field
-              label="Parts used"
-              value={form.parts}
-              onChange={(value) => update('parts', value)}
-              placeholder="List parts used"
-            />
-            <Field
-              label="Safety notes"
-              value={form.safety}
-              onChange={(value) => update('safety', value)}
-              placeholder="Add safety notes"
-            />
-          </div>
-
-          <div className="review-actions">
             <button
               type="button"
-              className="button-light"
+              className="button-primary save-button"
               onClick={() => {
-                setConfirmed(false);
-                setMessage('Review fields are ready to edit.');
+                setMessage('');
+                setStage('review');
               }}
             >
-              <Icon name="edit" /> Correct
+              <Icon name="check" /> Continue to review
             </button>
-            <button type="button" className="button-primary" onClick={confirm}>
-              <Icon name="check" /> Confirm
-            </button>
-          </div>
 
-          <div className="review-note">
-            <Icon name="shield" />
-            <span>Similarity is not a diagnosis. Follow approved plant procedures and verify findings.</span>
-          </div>
-        </section>
+            {message && (
+              <p className="form-message" role="status">
+                {message}
+              </p>
+            )}
+          </section>
+        )}
+
+        {stage === 'review' && (
+          <section className="panel review-panel technician-flow-panel">
+            <div className="section-heading">
+              <div>
+                <h2>Post-capture review</h2>
+                <p>Review the captured information and complete the fields below.</p>
+              </div>
+              <span className={confirmed ? 'review-badge confirmed' : 'review-badge'}>
+                {confirmed ? 'Confirmed' : 'Needs review'}
+              </span>
+            </div>
+
+            <div className="review-fields">
+              <Field
+                label="Equipment"
+                value={form.equipment}
+                onChange={(value) => update('equipment', value)}
+                placeholder="Enter equipment"
+              />
+              <Field
+                label="Subsystem"
+                value={form.subsystem}
+                onChange={(value) => update('subsystem', value)}
+                placeholder="Enter subsystem"
+              />
+              <Field
+                label="Symptom"
+                value={form.symptom}
+                onChange={(value) => update('symptom', value)}
+                placeholder="Describe the symptom"
+              />
+              <Field
+                label="Probable cause"
+                value={form.cause}
+                onChange={(value) => update('cause', value)}
+                placeholder="Add probable cause"
+              />
+              <Field
+                label="Action taken"
+                value={form.action}
+                onChange={(value) => update('action', value)}
+                placeholder="Describe action taken"
+              />
+              <Field
+                label="Parts used"
+                value={form.parts}
+                onChange={(value) => update('parts', value)}
+                placeholder="List parts used"
+              />
+              <Field
+                label="Safety notes"
+                value={form.safety}
+                onChange={(value) => update('safety', value)}
+                placeholder="Add safety notes"
+              />
+            </div>
+
+            <div className="review-actions">
+              <button
+                type="button"
+                className="button-light"
+                onClick={() => {
+                  setConfirmed(false);
+                  setMessage('');
+                  setStage('capture');
+                }}
+              >
+                <Icon name="edit" /> Correct
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => void startProcessing()}
+                disabled={saving}
+              >
+                <Icon name="check" /> Confirm and continue
+              </button>
+            </div>
+
+            {message && (
+              <p className="form-message" role="status">
+                {message}
+              </p>
+            )}
+
+            <div className="review-note">
+              <Icon name="shield" />
+              <span>Similarity is not a diagnosis. Follow approved plant procedures and verify findings.</span>
+            </div>
+          </section>
+        )}
+
+        {stage === 'processing' && (
+          <section className="panel technician-flow-panel">
+            <div className="technician-processing-content">
+              <div className="technician-processing-main-icon">
+                <span className="technician-processing-spinner">
+                  <Icon name="refresh" />
+                </span>
+              </div>
+
+              <h2>Your observation is being analyzed</h2>
+              <p className="technician-processing-active">
+                {processingStep < processingSteps.length
+                  ? `${processingSteps[processingStep]}…`
+                  : 'Preparing your saved observation…'}
+              </p>
+
+              <div className="technician-processing-list">
+                {processingSteps.map((step, index) => {
+                  const completed = index < processingStep;
+                  const active = index === processingStep;
+
+                  return (
+                    <div className="technician-processing-item" key={step}>
+                      <span
+                        className={`technician-processing-status ${
+                          completed ? 'completed' : active ? 'active' : 'pending'
+                        }`}
+                      >
+                        {completed ? (
+                          <Icon name="check" />
+                        ) : active ? (
+                          <span className="technician-processing-spinner">
+                            <Icon name="refresh" />
+                          </span>
+                        ) : (
+                          <Icon name="circle" />
+                        )}
+                      </span>
+                      <span style={{ fontWeight: completed || active ? 600 : 400 }}>
+                        {step}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="storage-hint" style={{ marginTop: '24px' }}>
+                Please wait while your observation is prepared for saving on this device.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {stage === 'success' && (
+          <section className="panel technician-flow-panel">
+            <div className="technician-processing-content">
+              <div className="technician-success-icon">
+                <Icon name="check" />
+              </div>
+
+              <h2>Observation saved successfully.</h2>
+              <p>Your observation and attached media have been saved on this device.</p>
+
+              <div className="technician-reference">
+                <span className="eyebrow">LOCAL CASE ID</span>
+                <p style={{ margin: '8px 0 0', fontWeight: 600 }}>
+                  {referenceId}
+                </p>
+              </div>
+
+              <p className="storage-hint">
+                Knowledge-base publishing and server synchronization are not connected in this workflow yet.
+              </p>
+
+              <div className="technician-flow-actions">
+                <button
+                  type="button"
+                  className="button-primary"
+                  onClick={() => {
+                    setStage('capture');
+                    setReferenceId('');
+                    setMessage('');
+                    setConfirmed(false);
+                  }}
+                >
+                  <Icon name="file" /> New Observation
+                </button>
+                <button
+                  type="button"
+                  className="button-light"
+                  onClick={() => window.location.assign('/technician')}
+                >
+                  <Icon name="arrow-left" /> Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </>
   );
@@ -818,14 +1100,6 @@ function ProfilePage({ online }: { online: boolean }) {
             <strong>Phone</strong>
             <span>+91 XXXXX XXXXX</span>
           </div>
-        </div>
-        <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
-          <Link to="/" className="button-light">
-            &larr; Back to Landing Page
-          </Link>
-          <Link to="/supervisor" className="button-primary">
-            Go to Supervisor Portal &rarr;
-          </Link>
         </div>
       </section>
     </>
