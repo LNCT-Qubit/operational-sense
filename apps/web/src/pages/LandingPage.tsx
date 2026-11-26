@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { ApiRequestError, signupRequest } from '../api/auth';
 
 export type UserRole = 'supervisor' | 'technician';
 export type AuthMode = 'login' | 'signup';
@@ -21,11 +22,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [password, setPassword] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('supervisor');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [formMessage, setFormMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
 
   const navigate = useNavigate();
 
+  const handleSignup = async () => {
+    setFormMessage(null);
+    setIsLoading(true);
+    try {
+      await signupRequest({ name: name.trim(), email: email.trim(), password, role: selectedRole });
+      // Account created. Login/session handling is a separate task, so send the user to the sign-in form.
+      setPassword('');
+      setName('');
+      setAuthMode('login');
+      setFormMessage({ kind: 'success', text: 'Account created successfully. Please sign in.' });
+    } catch (err) {
+      const issues = err instanceof ApiRequestError ? err.fieldIssues : [];
+      const text = issues.length > 0 ? issues.join(' ') : err instanceof Error ? err.message : 'Sign-up failed. Please try again.';
+      setFormMessage({ kind: 'error', text });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAuthSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return; // ignore repeated submissions while a request is running
+    if (authMode === 'signup') {
+      void handleSignup();
+      return;
+    }
+    setFormMessage(null);
     setIsLoading(true);
 
     setTimeout(() => {
@@ -318,6 +345,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 required
               />
             </div>
+
+            {/* Result of the last sign-up attempt (renders only after one) */}
+            {formMessage && (
+              <p
+                role={formMessage.kind === 'error' ? 'alert' : 'status'}
+                className={`text-xs font-semibold ${formMessage.kind === 'error' ? 'text-red-600' : 'text-[#2E7D4F]'}`}
+              >
+                {formMessage.text}
+              </p>
+            )}
 
             {/* Submit Action Button */}
             <button
