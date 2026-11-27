@@ -1,7 +1,17 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { clearSession, getCurrentUser } from '../api/session';
+import { clearSession, getAccessToken, getCurrentUser } from '../api/session';
+import {
+  deleteServerDraft,
+  fetchAttachmentBlobUrl,
+  fetchRecordingAudioUrl,
+  listServerDrafts,
+  searchServerCases,
+  type ServerAttachmentMeta,
+  type ServerCaseItem,
+  type ServerDraftDetail,
+} from '../api/drafts';
 import { formatDuration, useAudioRecorder } from '../features/useAudioRecorder';
 import {
   DraftStorageError,
@@ -22,6 +32,14 @@ import { Icon } from '../component/technicainComponent/Icons';
 
 type Page = 'capture' | 'drafts' | 'search' | 'profile';
 type Draft = TechnicianDraft;
+type DisplayDraft = Draft & {
+  isServerOnly?: boolean;
+  serverStatus?: ServerDraftDetail['status'];
+  recordingStatus?: string;
+  transcriptionText?: string | null;
+  reviewComment?: string | null;
+  serverAttachments?: ServerAttachmentMeta[];
+};
 type CaptureStage = 'capture' | 'review' | 'processing' | 'success';
 
 type DraftMediaUrls = {
@@ -909,7 +927,7 @@ function CapturePage({
               </div>
 
               <p className="storage-hint">
-                Saved locally. Audio notes sync automatically in the background when online and signed in.
+                Saved locally. Notes, audio, and attachments sync automatically in the background when online and signed in.
               </p>
 
               <div className="technician-flow-actions">
@@ -967,14 +985,19 @@ function SyncStatusBadge({ status }: { status: DraftSyncStatus }) {
 function DraftMedia({
   draft,
   mediaUrls,
+  serverAudioUrl,
+  onDownloadServerAttachment,
 }: {
-  draft: Draft;
+  draft: DisplayDraft;
   mediaUrls?: DraftMediaUrls;
+  serverAudioUrl?: string;
+  onDownloadServerAttachment: (serverDraftId: string, att: ServerAttachmentMeta) => void;
 }) {
-  const audioUrl = mediaUrls?.audioUrl;
+  const audioUrl = mediaUrls?.audioUrl ?? serverAudioUrl;
   const attachmentUrls = mediaUrls?.attachmentUrls ?? [];
+  const serverAttachments = draft.attachments.length === 0 ? (draft.serverAttachments ?? []) : [];
 
-  if (!audioUrl && draft.attachments.length === 0) return null;
+  if (!audioUrl && draft.attachments.length === 0 && serverAttachments.length === 0) return null;
 
   return (
     <div className="draft-media">
@@ -988,12 +1011,26 @@ function DraftMedia({
           </a>
         );
       })}
+      {draft.serverDraftId &&
+        serverAttachments.map((att) => (
+          <button
+            key={att.id}
+            type="button"
+            className="button-light"
+            style={{ minHeight: '28px', padding: '4px 10px', fontSize: '12px' }}
+            onClick={() => onDownloadServerAttachment(draft.serverDraftId!, att)}
+          >
+            <Icon name="download" /> {att.file_name}
+          </button>
+        ))}
     </div>
   );
 }
 
 function DraftsPage({
   drafts,
+  online,
+  loadingServer,
   quotaStatus,
   storageError,
   onDismissStorageError,
@@ -1002,18 +1039,22 @@ function DraftsPage({
   onRecover,
   onNavigateToCapture,
 }: {
-  drafts: Draft[];
+  drafts: DisplayDraft[];
+  online: boolean;
+  loadingServer: boolean;
   quotaStatus: StorageQuotaStatus | null;
   storageError: string | null;
   onDismissStorageError: () => void;
-  onRemove: (id: string) => void;
+  onRemove: (draft: DisplayDraft) => void;
   onRetry: (id: string) => void;
   onRecover: () => void;
   onNavigateToCapture: () => void;
 }) {
   const [filter, setFilter] = useState('all');
   const [mediaUrlsById, setMediaUrlsById] = useState<Record<string, DraftMediaUrls>>({});
+  const [serverAudioUrlsById, setServerAudioUrlsById] = useState<Record<string, string>>({});
   const activeUrlsRef = useRef<Map<string, DraftMediaUrls>>(new Map());
+  const serverAudioUrlsRef = useRef<Map<string, string>>(new Map());
 
   const revokeEntry = useCallback((entry?: DraftMediaUrls) => {
     if (!entry) return;
@@ -1065,13 +1106,72 @@ function DraftsPage({
     };
   }, [visible, revokeEntry]);
 
-  const handleRemove = (id: string) => {
-    const entry = activeUrlsRef.current.get(id);
+  useEffect(() => {
+    if (!online || !getAccessToken()) return undefined;
+    const controller = new AbortController();
+    let cancelled = false;
+    const localAudioUrls = new Map<string, string>();
+
+    const candidates = visible.filter((d) => !d.audio && d.serverRecordingId);
+    if (candidates.length === 0) return undefined;
+
+    void Promise.all(
+      candidates.map(async (d) => {
+        try {
+          const url = await fetchRecordingAudioUrl(d.serverRecordingId!, controller.signal);
+          if (cancelled) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          localAudioUrls.set(d.id, url);
+        } catch {
+          /* ignore transient/offline audio preview failures */
+        }
+      }),
+    ).then(() => {
+      if (cancelled) return;
+      serverAudioUrlsRef.current = localAudioUrls;
+      const rec: Record<string, string> = {};
+      for (const [k, v] of localAudioUrls.entries()) rec[k] = v;
+      setServerAudioUrlsById(rec);
+    });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      for (const url of localAudioUrls.values()) {
+        URL.revokeObjectURL(url);
+      }
+      if (serverAudioUrlsRef.current === localAudioUrls) {
+        serverAudioUrlsRef.current = new Map();
+      }
+    };
+  }, [visible, online]);
+
+  const handleDownloadServerAttachment = useCallback(async (serverDraftId: string, att: ServerAttachmentMeta) => {
+    try {
+      const blobUrl = await fetchAttachmentBlobUrl(serverDraftId, att.id);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = att.file_name;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+    } catch {
+      /* ignore failed download click */
+    }
+  }, []);
+
+  const handleRemove = (draft: DisplayDraft) => {
+    const entry = activeUrlsRef.current.get(draft.id);
     if (entry) {
       revokeEntry(entry);
-      activeUrlsRef.current.delete(id);
+      activeUrlsRef.current.delete(draft.id);
     }
-    onRemove(id);
+    onRemove(draft);
   };
 
   const handleRecover = () => {
@@ -1083,17 +1183,17 @@ function DraftsPage({
     <>
       <PageIntro
         title="Technician saved notes"
-        description="Manage locally saved notes, review observations, and continue when you're ready."
+        description="Manage locally saved and server-synced notes, review observations, and track review status."
       />
       {storageError && <StorageAlertBanner message={storageError} onDismiss={onDismissStorageError} />}
       <section className="panel drafts-panel">
         <div className="draft-toolbar">
           <div>
-            <h2>Saved notes (drafts)</h2>
-            <p>Notes and media saved locally on this device.</p>
+            <h2>Saved notes (drafts){loadingServer ? ' · Refreshing…' : ''}</h2>
+            <p>Notes and media saved on this device and synced with the server.</p>
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
               <button type="button" className="button-light" onClick={handleRecover}>
-                <Icon name="refresh" /> Recover offline drafts
+                <Icon name="refresh" /> Refresh &amp; recover drafts
               </button>
               {quotaStatus && (
                 <span
@@ -1150,31 +1250,53 @@ function DraftsPage({
               const syncStatus = normalizeSyncStatusLabel(draft.syncStatus);
               const durationMs = draft.durationMs ?? draft.duration;
               const audioBytes = draft.audioSizeBytes ?? draft.audio?.size ?? 0;
-              const attachmentBytes = draft.attachments.reduce((sum, item) => sum + (item.size ?? item.blob.size ?? 0), 0);
+              const attachmentCount = draft.attachments.length || draft.serverAttachments?.length || 0;
+              const attachmentBytes =
+                draft.attachments.length > 0
+                  ? draft.attachments.reduce((sum, item) => sum + (item.size ?? item.blob.size ?? 0), 0)
+                  : (draft.serverAttachments ?? []).reduce((sum, item) => sum + item.size_bytes, 0);
 
               return (
                 <article className="draft-item" key={draft.id}>
                   <span className="draft-icon">
-                    <Icon name={draft.mode === 'Voice' ? 'mic' : 'file'} />
+                    <Icon name={draft.mode.toLowerCase() === 'voice' ? 'mic' : 'file'} />
                   </span>
                   <div className="draft-copy">
                     <strong>{draft.equipment || 'Field observation'}</strong>
-                    <p>{draft.observation || draft.symptom || 'No observation text added'}</p>
+                    <p>{draft.observation || draft.symptom || draft.transcriptionText || 'No observation text added'}</p>
                     <small>
                       {new Date(draft.recordedAt ?? draft.date).toLocaleString()} · {draft.mode}
                       {durationMs > 0 ? ` · ${formatDuration(durationMs)}` : ''}
                       {audioBytes > 0 ? ` · Audio ${formatBytes(audioBytes)}` : ''}
-                      {attachmentBytes > 0 ? ` · ${draft.attachments.length} file(s) (${formatBytes(attachmentBytes)})` : ''}
+                      {attachmentCount > 0 ? ` · ${attachmentCount} file(s) (${formatBytes(attachmentBytes)})` : ''}
+                      {draft.serverStatus ? ` · Review: ${draft.serverStatus}` : ''}
+                      {draft.recordingStatus ? ` · Pipeline: ${draft.recordingStatus}` : ''}
+                      {draft.isServerOnly ? ' · Cloud copy' : ''}
                     </small>
+                    {draft.transcriptionText && (
+                      <small style={{ display: 'block', color: '#08677a', marginTop: '4px' }}>
+                        Transcript: {draft.transcriptionText}
+                      </small>
+                    )}
+                    {draft.reviewComment && (
+                      <small style={{ display: 'block', color: '#526b75', marginTop: '4px' }}>
+                        Supervisor note: {draft.reviewComment}
+                      </small>
+                    )}
                     {syncStatus === 'failed' && draft.lastError && (
                       <small style={{ display: 'block', color: '#b84a3a', marginTop: '4px' }}>
                         Sync error: {draft.lastError}
                       </small>
                     )}
-                    <DraftMedia draft={draft} mediaUrls={mediaUrlsById[draft.id]} />
+                    <DraftMedia
+                      draft={draft}
+                      mediaUrls={mediaUrlsById[draft.id]}
+                      serverAudioUrl={serverAudioUrlsById[draft.id]}
+                      onDownloadServerAttachment={(sId, att) => void handleDownloadServerAttachment(sId, att)}
+                    />
                   </div>
                   <SyncStatusBadge status={syncStatus} />
-                  {syncStatus === 'failed' && (
+                  {syncStatus === 'failed' && !draft.isServerOnly && (
                     <button
                       type="button"
                       className="button-light"
@@ -1189,7 +1311,7 @@ function DraftsPage({
                     type="button"
                     className="icon-button"
                     aria-label="Delete draft"
-                    onClick={() => handleRemove(draft.id)}
+                    onClick={() => handleRemove(draft)}
                   >
                     <Icon name="trash" />
                   </button>
@@ -1203,7 +1325,7 @@ function DraftsPage({
               <Icon name="file" />
             </span>
             <h3>No saved notes yet</h3>
-            <p>Notes you save from Capture will appear here. You can review or remove them from this device.</p>
+            <p>Notes you save from Capture will appear here and sync automatically with the server.</p>
             <button type="button" className="button-primary" onClick={onNavigateToCapture}>
               Go to capture
             </button>
@@ -1211,24 +1333,51 @@ function DraftsPage({
         )}
       </section>
       <p className="storage-hint">
-        Saved notes, audio, and attachments stay stored locally on this device; audio notes sync automatically when online and signed in.
+        Saved notes, audio, and attachments stay stored locally on this device and sync automatically when online and signed in.
       </p>
     </>
   );
 }
 
-function SearchPage() {
+function SearchPage({ online }: { online: boolean }) {
   const [query, setQuery] = useState('');
-  const [asset, setAsset] = useState('');
   const [equipment, setEquipment] = useState('');
-  const [subsystem, setSubsystem] = useState('');
+  const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [caseResults, setCaseResults] = useState<ServerCaseItem[]>([]);
+  const [draftResults, setDraftResults] = useState<ServerDraftDetail[]>([]);
+
+  const runSearch = async () => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    if (!online || !getAccessToken()) {
+      setError('Connect to the network and sign in to search server cases and notes.');
+      setSearched(true);
+      return;
+    }
+    setSearching(true);
+    setError(null);
+    setSearched(true);
+    try {
+      const [casesRes, draftsRes] = await Promise.all([
+        searchServerCases({ q: trimmed, equipment_class_id: equipment.trim() || undefined, limit: 20 }),
+        listServerDrafts({ q: trimmed, limit: 20 }),
+      ]);
+      setCaseResults(casesRes.items);
+      setDraftResults(draftsRes.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Search failed.');
+    } finally {
+      setSearching(false);
+    }
+  };
 
   return (
     <>
       <PageIntro
         title="Technician search cases"
-        description="Find similar past cases to support troubleshooting."
+        description="Search live operational cases and synced field notes to support troubleshooting."
       />
       <div className="search-layout">
         <section className="panel search-form">
@@ -1240,52 +1389,31 @@ function SearchPage() {
             placeholder="Describe the symptom or issue…"
             multiline
           />
-          <label className="field">
-            <span>
-              Asset context <small>(optional)</small>
-            </span>
-            <div className="input-icon">
-              <Icon name="search" />
-              <input
-                value={asset}
-                onChange={(e) => setAsset(e.target.value)}
-                placeholder="Search or browse equipment…"
-              />
-              <Icon name="chevron" />
-            </div>
-          </label>
-          <div className="field-row">
-            <Field
-              label="Equipment class"
-              value={equipment}
-              onChange={setEquipment}
-              placeholder="Select class…"
-            />
-            <Field
-              label="Subsystem"
-              value={subsystem}
-              onChange={setSubsystem}
-              placeholder="Select subsystem…"
-            />
-          </div>
+          <Field
+            label="Equipment class filter (optional)"
+            value={equipment}
+            onChange={setEquipment}
+            placeholder="e.g. EQ-PUMP"
+          />
           <div className="search-actions">
             <button
               type="button"
               className="button-primary"
-              disabled={!query.trim()}
-              onClick={() => setSearched(true)}
+              disabled={!query.trim() || searching}
+              onClick={() => void runSearch()}
             >
-              <Icon name="search" /> Search
+              <Icon name="search" /> {searching ? 'Searching…' : 'Search'}
             </button>
             <button
               type="button"
               className="button-light"
               onClick={() => {
                 setQuery('');
-                setAsset('');
                 setEquipment('');
-                setSubsystem('');
                 setSearched(false);
+                setError(null);
+                setCaseResults([]);
+                setDraftResults([]);
               }}
             >
               <Icon name="refresh" /> Clear
@@ -1299,39 +1427,58 @@ function SearchPage() {
         <section className="panel results-panel">
           <div className="results-heading">
             <h2>Search results</h2>
-            <span>Case library</span>
+            <span>{searched ? `${caseResults.length + draftResults.length} match(es)` : 'Case library'}</span>
           </div>
-          {searched ? (
-            <div className="empty-state compact">
-              <span className="empty-icon">
-                <Icon name="database" />
-              </span>
-              <h3>Case search simulated</h3>
-              <p>Your search criteria are logged. Query: "{query}". Similar cases will appear when the backend index is connected.</p>
-            </div>
-          ) : (
+          {error && <StorageAlertBanner message={error} onDismiss={() => setError(null)} />}
+          {!searched ? (
             <div className="empty-state">
               <span className="empty-icon">
                 <Icon name="search" />
               </span>
               <h3>Search for cases</h3>
-              <p>Enter a symptom or issue and optionally add asset context and filters, then Search to find similar cases.</p>
+              <p>Enter a symptom or keyword and click Search to query live server cases and synced notes.</p>
+            </div>
+          ) : searching ? (
+            <p className="storage-hint">Searching server records…</p>
+          ) : caseResults.length === 0 && draftResults.length === 0 ? (
+            <div className="empty-state compact">
+              <span className="empty-icon">
+                <Icon name="database" />
+              </span>
+              <h3>No matching records</h3>
+              <p>No operational cases or synced drafts matched "{query}".</p>
+            </div>
+          ) : (
+            <div className="draft-list">
+              {caseResults.map((c) => (
+                <article className="draft-item" key={c.case_id}>
+                  <span className="draft-icon">
+                    <Icon name="database" />
+                  </span>
+                  <div className="draft-copy">
+                    <strong>{c.case_reference} · {c.case_title || c.equipment_class_id}</strong>
+                    <p>{c.symptom_text}</p>
+                    <small>
+                      Status: {c.case_status}
+                      {c.primary_suspected_cause ? ` · Cause: ${c.primary_suspected_cause}` : ''}
+                    </small>
+                  </div>
+                </article>
+              ))}
+              {draftResults.map((d) => (
+                <article className="draft-item" key={d.id}>
+                  <span className="draft-icon">
+                    <Icon name={d.capture_mode === 'voice' ? 'mic' : 'file'} />
+                  </span>
+                  <div className="draft-copy">
+                    <strong>{d.equipment || 'Synced field note'}</strong>
+                    <p>{d.observation || d.symptom || '(No text)'}</p>
+                    <small>Note · {d.status} · {new Date(d.created_at).toLocaleString()}</small>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
-          <div className="result-columns">
-            <span>
-              <Icon name="file" /> Case summary
-            </span>
-            <span>
-              <Icon name="shield" /> Verification status
-            </span>
-            <span>
-              <Icon name="layers" /> Similarity
-            </span>
-            <span>
-              <Icon name="book" /> Sources
-            </span>
-          </div>
         </section>
       </div>
     </>
@@ -1339,6 +1486,9 @@ function SearchPage() {
 }
 
 function ProfilePage({ online }: { online: boolean }) {
+  const user = getCurrentUser();
+  const initial = (user?.name?.[0] ?? 'T').toUpperCase();
+
   return (
     <>
       <PageIntro
@@ -1347,11 +1497,11 @@ function ProfilePage({ online }: { online: boolean }) {
       />
       <section className="panel profile-card">
         <div className="profile-main">
-          <div className="profile-avatar">T</div>
+          <div className="profile-avatar">{initial}</div>
           <div>
-            <h2>Technician account</h2>
+            <h2>{user?.name ?? 'Technician account'}</h2>
             <p>
-              <Icon name="gear" /> Technician details are supplied by the sign-in service.
+              <Icon name="gear" /> Role: {user?.role ?? 'TECHNICIAN'}
             </p>
             <span className={online ? 'profile-online' : 'profile-offline'}>
               <i />
@@ -1359,26 +1509,26 @@ function ProfilePage({ online }: { online: boolean }) {
             </span>
           </div>
           <span className="signed-in">
-            <Icon name="info" /> Profile active
+            <Icon name="info" /> {user ? 'Profile active' : 'Session unavailable'}
           </span>
         </div>
         <div className="contact-section">
           <div className="contact-title">
             <Icon name="user" />
             <div>
-              <h3>Contact details</h3>
-              <p>Technician contact information.</p>
+              <h3>Account details</h3>
+              <p>Authenticated technician details from the sign-in service.</p>
             </div>
           </div>
           <div className="contact-row">
             <Icon name="mail" />
             <strong>Email</strong>
-            <span>technician@example.com</span>
+            <span>{user?.email ?? 'Not signed in'}</span>
           </div>
           <div className="contact-row">
-            <Icon name="phone" />
-            <strong>Phone</strong>
-            <span>+91 XXXXX XXXXX</span>
+            <Icon name="gear" />
+            <strong>User ID</strong>
+            <span>{user?.id ?? '—'}</span>
           </div>
         </div>
       </section>
@@ -1392,6 +1542,8 @@ export const TechnicianPage: React.FC = () => {
   const currentUserId = getCurrentUser()?.id;
   const [page, setPage] = useState<Page>('capture');
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [serverDrafts, setServerDrafts] = useState<ServerDraftDetail[]>([]);
+  const [loadingServer, setLoadingServer] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState<StorageQuotaStatus | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [notice, setNotice] = useState('');
@@ -1411,14 +1563,27 @@ export const TechnicianPage: React.FC = () => {
     return scopeDraftsToUser(allDrafts, currentUserId);
   }, [currentUserId]);
 
+  const refreshServerDrafts = useCallback(async () => {
+    if (!navigator.onLine || !getAccessToken()) return;
+    setLoadingServer(true);
+    try {
+      const res = await listServerDrafts({ limit: 50, offset: 0 });
+      setServerDrafts(res.items);
+    } catch {
+      /* Ignore background fetch failures while offline or expired */
+    } finally {
+      setLoadingServer(false);
+    }
+  }, []);
+
   const recover = async () => {
     try {
       const saved = await loadScopedDrafts();
       setDrafts(saved);
       setStorageError(null);
       setStorageReady(true);
-      await refreshQuotaStatus();
-      setNotice('Offline drafts recovered from this device.');
+      await Promise.all([refreshQuotaStatus(), refreshServerDrafts()]);
+      setNotice('Offline and server drafts refreshed.');
       setTimeout(() => setNotice(''), 2500);
     } catch (error) {
       setStorageError(
@@ -1446,10 +1611,25 @@ export const TechnicianPage: React.FC = () => {
       .finally(() => {
         if (active) setStorageReady(true);
       });
+    void Promise.resolve().then(() => {
+      if (active) return refreshServerDrafts();
+    });
     return () => {
       active = false;
     };
-  }, [loadScopedDrafts]);
+  }, [loadScopedDrafts, refreshServerDrafts]);
+
+  useEffect(() => {
+    if (page === 'drafts' && online && getAccessToken()) {
+      let active = true;
+      void Promise.resolve().then(() => {
+        if (active) return refreshServerDrafts();
+      });
+      return () => {
+        active = false;
+      };
+    }
+  }, [page, online, refreshServerDrafts]);
 
   useEffect(() => {
     if (syncState.revision === 0) return;
@@ -1458,7 +1638,7 @@ export const TechnicianPage: React.FC = () => {
       .then((saved) => {
         if (!active) return;
         setDrafts(saved);
-        return refreshQuotaStatus();
+        return Promise.all([refreshQuotaStatus(), refreshServerDrafts()]);
       })
       .catch(() => {
         /* Ignore background refresh failures; explicit user actions surface storage errors. */
@@ -1466,7 +1646,70 @@ export const TechnicianPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [syncState.revision, loadScopedDrafts, refreshQuotaStatus]);
+  }, [syncState.revision, loadScopedDrafts, refreshQuotaStatus, refreshServerDrafts]);
+
+  const mergedDrafts = useMemo<DisplayDraft[]>(() => {
+    const serverByClientId = new Map<string, ServerDraftDetail>();
+    for (const s of serverDrafts) {
+      serverByClientId.set(s.client_draft_id, s);
+    }
+    const seenClientIds = new Set<string>();
+    const combined: DisplayDraft[] = drafts.map((local) => {
+      seenClientIds.add(local.id);
+      const match = serverByClientId.get(local.id);
+      return {
+        ...local,
+        ...(match
+          ? {
+              serverDraftId: local.serverDraftId ?? match.id,
+              serverRecordingId: local.serverRecordingId ?? match.recording_id ?? undefined,
+              serverStatus: match.status,
+              recordingStatus: match.recording?.processing_status,
+              transcriptionText: match.transcription?.transcript ?? null,
+              reviewComment: match.review_comment,
+              serverAttachments: match.attachments,
+            }
+          : {}),
+      };
+    });
+
+    for (const s of serverDrafts) {
+      if (seenClientIds.has(s.client_draft_id)) continue;
+      combined.push({
+        id: s.client_draft_id,
+        date: s.recorded_at ?? s.created_at,
+        recordedAt: s.recorded_at ?? s.created_at,
+        createdAt: Date.parse(s.client_created_at ?? s.created_at),
+        updatedAt: Date.parse(s.client_updated_at ?? s.updated_at),
+        observation: s.observation,
+        equipment: s.equipment,
+        subsystem: s.subsystem,
+        symptom: s.symptom,
+        cause: s.probable_cause,
+        action: s.action_taken,
+        parts: s.parts_used,
+        safety: s.safety_notes,
+        mode: s.capture_mode === 'voice' ? 'Voice' : 'Text',
+        duration: s.duration_ms ?? 0,
+        durationMs: s.duration_ms ?? 0,
+        audioSizeBytes: s.recording?.size_bytes,
+        audioMimeType: s.recording?.mime_type,
+        attachments: [],
+        syncStatus: 'completed',
+        userId: s.created_by,
+        serverDraftId: s.id,
+        serverRecordingId: s.recording_id ?? undefined,
+        isServerOnly: true,
+        serverStatus: s.status,
+        recordingStatus: s.recording?.processing_status,
+        transcriptionText: s.transcription?.transcript ?? null,
+        reviewComment: s.review_comment,
+        serverAttachments: s.attachments,
+      });
+    }
+
+    return combined.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  }, [drafts, serverDrafts]);
 
   const save = async (draft: Draft) => {
     try {
@@ -1479,7 +1722,7 @@ export const TechnicianPage: React.FC = () => {
         setDrafts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
       }
       await refreshQuotaStatus();
-      if (draft.audio && navigator.onLine) {
+      if (navigator.onLine) {
         void syncPendingDrafts();
       }
     } catch (error) {
@@ -1508,15 +1751,28 @@ export const TechnicianPage: React.FC = () => {
     }
   };
 
-  const remove = async (id: string) => {
+  const remove = async (draft: DisplayDraft) => {
     try {
-      await deleteDraft(id);
+      if (!draft.isServerOnly) {
+        await deleteDraft(draft.id);
+        setDrafts((current) => current.filter((item) => item.id !== draft.id));
+      }
+      if (draft.serverDraftId && navigator.onLine && getAccessToken()) {
+        try {
+          await deleteServerDraft(draft.serverDraftId);
+          setServerDrafts((current) => current.filter((item) => item.id !== draft.serverDraftId));
+        } catch (err) {
+          if (err instanceof Error && !err.message.includes('404')) {
+            setStorageError(err.message);
+            return;
+          }
+        }
+      }
       setStorageError(null);
-      setDrafts((current) => current.filter((draft) => draft.id !== id));
       await refreshQuotaStatus();
     } catch (error) {
       setStorageError(
-        extractStorageErrorMessage(error, 'Could not delete this draft from local storage.'),
+        extractStorageErrorMessage(error, 'Could not delete this draft.'),
       );
     }
   };
@@ -1546,7 +1802,7 @@ export const TechnicianPage: React.FC = () => {
       <Header
         page={page}
         online={online}
-        draftsCount={drafts.length}
+        draftsCount={mergedDrafts.length}
         pendingCount={pendingCount}
         syncState={syncState}
         onSyncNow={() => void triggerSync()}
@@ -1575,17 +1831,19 @@ export const TechnicianPage: React.FC = () => {
         )}
         {page === 'drafts' && (
           <DraftsPage
-            drafts={drafts}
+            drafts={mergedDrafts}
+            online={online}
+            loadingServer={loadingServer}
             quotaStatus={quotaStatus}
             storageError={storageError}
             onDismissStorageError={() => setStorageError(null)}
-            onRemove={(id) => void remove(id)}
+            onRemove={(draft) => void remove(draft)}
             onRetry={(id) => void retry(id)}
             onRecover={() => void recover()}
             onNavigateToCapture={() => setPage('capture')}
           />
         )}
-        {page === 'search' && <SearchPage />}
+        {page === 'search' && <SearchPage online={online} />}
         {page === 'profile' && <ProfilePage online={online} />}
       </main>
 
@@ -1611,8 +1869,8 @@ export const TechnicianPage: React.FC = () => {
             <span>
               {item === 'search'
                 ? 'Search cases'
-                : item === 'drafts' && drafts.length > 0
-                  ? `Drafts (${drafts.length})`
+                : item === 'drafts' && mergedDrafts.length > 0
+                  ? `Drafts (${mergedDrafts.length})`
                   : item[0].toUpperCase() + item.slice(1)}
             </span>
           </button>

@@ -4,14 +4,19 @@ import {
   DraftStorageError,
   claimNextPendingDraft,
   deleteDraft,
+  getDraftAttachmentKey,
   getDraftById,
   getDrafts,
   getStorageQuotaStatus,
   listDraftSummaries,
+  markDraftAttachmentUploaded,
+  markDraftAudioUploaded,
+  markDraftServerSynced,
   markDraftSyncCompleted,
   markDraftSyncFailed,
   retryFailedDraft,
   saveDraft,
+  scopeDraftsToUser,
   type SaveDraftInput,
 } from '../draftStore';
 
@@ -453,5 +458,66 @@ describe('US-03 Offline Audio Storage (draftStore v2)', () => {
 
     await deleteDraft(draftId);
     expect(await getDraftById(draftId)).toBeNull();
+  });
+
+  it('Checkpointed sync helpers persist partial stage progress and scopeDraftsToUser binds pre-login drafts', async () => {
+    const preLoginId = crypto.randomUUID();
+    const otherUserId = crypto.randomUUID();
+
+    await saveDraft(
+      makeBaseDraft({
+        id: preLoginId,
+        userId: undefined,
+        audio: new Blob([new Uint8Array([1, 2, 3, 4])], { type: 'audio/webm' }),
+        attachments: [
+          {
+            name: 'photo.jpg',
+            type: 'image/jpeg',
+            size: 2,
+            blob: new Blob([new Uint8Array([9, 8])], { type: 'image/jpeg' }),
+          },
+        ],
+      }),
+    );
+    await saveDraft(
+      makeBaseDraft({
+        id: otherUserId,
+        userId: 'other-user',
+        audio: undefined,
+      }),
+    );
+
+    const boundCount = await scopeDraftsToUser('active-tech-1');
+    expect(boundCount).toBe(1);
+    expect((await getDraftById(preLoginId))?.userId).toBe('active-tech-1');
+    expect((await getDraftById(otherUserId))?.userId).toBe('other-user');
+
+    const claimed = await claimNextPendingDraft({ userId: 'active-tech-1', requireAudio: false });
+    expect(claimed?.id).toBe(preLoginId);
+
+    await markDraftAudioUploaded(preLoginId, 'srv-rec-ckpt');
+    let mid = await getDraftById(preLoginId);
+    expect(mid?.syncStatus).toBe('uploading');
+    expect(mid?.serverRecordingId).toBe('srv-rec-ckpt');
+
+    await markDraftServerSynced(preLoginId, 'srv-draft-ckpt');
+    mid = await getDraftById(preLoginId);
+    expect(mid?.syncStatus).toBe('uploading');
+    expect(mid?.serverDraftId).toBe('srv-draft-ckpt');
+
+    const attKey = getDraftAttachmentKey(preLoginId, 0, mid!.attachments[0]);
+    await markDraftAttachmentUploaded(preLoginId, attKey);
+    await markDraftAttachmentUploaded(preLoginId, attKey); // idempotent duplicate
+    mid = await getDraftById(preLoginId);
+    expect(mid?.syncedAttachmentKeys).toEqual([attKey]);
+
+    await markDraftSyncCompleted(preLoginId, {
+      serverRecordingId: 'srv-rec-ckpt',
+      serverDraftId: 'srv-draft-ckpt',
+    });
+    const done = await getDraftById(preLoginId);
+    expect(done?.syncStatus).toBe('completed');
+    expect(done?.serverRecordingId).toBe('srv-rec-ckpt');
+    expect(done?.serverDraftId).toBe('srv-draft-ckpt');
   });
 });

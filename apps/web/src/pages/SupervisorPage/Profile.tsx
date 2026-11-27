@@ -1,10 +1,12 @@
-
+import { getCurrentUser } from '../../api/session'
 import { Icon } from '../../component/supervisorComponent/Icons'
 import PageIntro from '../../component/supervisorComponent/PageIntro'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 
 export default function Profile() {
   const online = useNetworkStatus()
+  const user = getCurrentUser()
+  const initial = (user?.name?.[0] ?? 'S').toUpperCase()
 
   return (
     <>
@@ -15,10 +17,11 @@ export default function Profile() {
 
       <section className="panel profile-card">
         <div className="profile-main">
-          <div className="profile-avatar">S</div>
+          <div className="profile-avatar">{initial}</div>
 
           <div>
-            <h2>Supervisor account</h2>
+            <h2>{user?.name ?? 'Supervisor account'}</h2>
+            <p>Role: {user?.role ?? 'SUPERVISOR'}</p>
 
             <span className={online ? 'profile-online' : 'profile-offline'}>
               <i />
@@ -27,7 +30,7 @@ export default function Profile() {
           </div>
 
           <span className="signed-in">
-            <Icon name="info" /> Profile integration pending
+            <Icon name="info" /> {user ? 'Signed in' : 'Session unavailable'}
           </span>
         </div>
 
@@ -35,21 +38,21 @@ export default function Profile() {
           <div className="contact-title">
             <Icon name="user" />
             <div>
-              <h3>Contact details</h3>
-              <p>Supervisor contact information.</p>
+              <h3>Account details</h3>
+              <p>Authenticated supervisor information from the sign-in service.</p>
             </div>
           </div>
 
           <div className="contact-row">
             <Icon name="mail" />
             <strong>Email</strong>
-            <span>Not provided</span>
+            <span>{user?.email ?? 'Not signed in'}</span>
           </div>
 
           <div className="contact-row">
-            <Icon name="phone" />
-            <strong>Phone</strong>
-            <span>Not provided</span>
+            <Icon name="gear" />
+            <strong>User ID</strong>
+            <span>{user?.id ?? '—'}</span>
           </div>
         </div>
       </section>

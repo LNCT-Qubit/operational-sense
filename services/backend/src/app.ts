@@ -16,6 +16,13 @@ import { corsAllowList } from './http/cors';
 import { createAuthHandlers } from './modules/users/auth.handlers';
 import type { LoginService } from './modules/users/login.service';
 import type { SignupService } from './modules/users/signup.service';
+import { createDraftRouter } from './modules/drafts/draft.routes';
+import type { TechnicianDraftService } from './modules/drafts/draft.service';
+import { createCaseRouter } from './modules/cases/case.routes';
+import type { CaseService } from './modules/cases/case.service';
+import { createAssetRouter } from './modules/assets/asset.routes';
+import type { AssetService } from './modules/assets/asset.service';
+import { createTaxonomyRouter, type TaxonomyService } from './modules/taxonomy/taxonomy.routes';
 
 export const serviceName = 'operational-sense-backend';
 
@@ -25,6 +32,10 @@ export interface AppDeps {
   logger: Logger;
   /** Public signup. Optional: when absent, the /auth routes are simply not mounted (keeps existing tests/wiring valid). */
   signup?: { service: SignupService; loginService?: LoginService; corsAllowedOrigins: readonly string[] };
+  drafts?: { service: TechnicianDraftService; maxAttachmentBytes?: number };
+  cases?: { service: CaseService };
+  assets?: { service: AssetService };
+  taxonomy?: { service: TaxonomyService };
   /** Resolves if the database answers; used by /health/ready. */
   ping: () => Promise<void>;
 }
@@ -51,6 +62,19 @@ export function createApp(deps: AppDeps) {
     app.use(`${API_PREFIX}/auth`, authRouter);
   }
 
+  if (deps.drafts) {
+    app.use(`${API_PREFIX}/drafts`, createDraftRouter(deps.config.jwtSecret, deps.drafts.service, deps.drafts.maxAttachmentBytes));
+  }
+  if (deps.cases) {
+    app.use(`${API_PREFIX}/cases`, createCaseRouter(deps.config.jwtSecret, deps.cases.service));
+  }
+  if (deps.assets) {
+    app.use(`${API_PREFIX}/assets`, createAssetRouter(deps.config.jwtSecret, deps.assets.service));
+  }
+  if (deps.taxonomy) {
+    app.use(`${API_PREFIX}/taxonomy`, createTaxonomyRouter(deps.config.jwtSecret, deps.taxonomy.service));
+  }
+
   const h = createRecordingHandlers(deps.service, deps.config);
   const api = express.Router();
   api.use(authenticate(deps.config.jwtSecret) as any);
@@ -65,6 +89,7 @@ export function createApp(deps: AppDeps) {
   api.post('/recordings', anyRole as any, audioOnly, h.upload as any);
   api.get('/recordings', anyRole as any, h.list as any);
   api.get('/recordings/:id', anyRole as any, h.get as any);
+  api.get('/recordings/:id/audio', anyRole as any, h.getAudio as any);
   api.post('/recordings/:id/process', anyRole as any, h.processRecording as any);
   api.get('/recordings/:id/draft', anyRole as any, h.getDraft as any);
   app.use(API_PREFIX, api);

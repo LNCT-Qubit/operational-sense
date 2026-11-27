@@ -1,9 +1,16 @@
 import {
   claimNextPendingDraft,
+  getDraftAttachmentKey,
+  markDraftAttachmentUploaded,
+  markDraftAudioUploaded,
+  markDraftServerSynced,
   markDraftSyncCompleted,
   markDraftSyncFailed,
+  scopeDraftsToUser,
+  type HydratedTechnicianDraft,
 } from '../features/draftStore';
 import { getAccessToken, getSessionUser } from '../api/session';
+import { uploadDraftAttachmentRequest, upsertDraftRequest } from '../api/drafts';
 import { UPLOAD_TIMEOUT_MS, uploadRecording } from './uploadService';
 
 export const UPLOAD_LEASE_DURATION_MS = 60_000;
@@ -23,6 +30,15 @@ export interface SyncStateSnapshot {
   nextRetryAt: number | null;
   lastSyncAt: number | null;
   revision: number;
+}
+
+interface StageFailure {
+  authError?: boolean;
+  retryable?: boolean;
+  networkError?: boolean;
+  timeoutError?: boolean;
+  retryAfterMs?: number;
+  errorMessage?: string;
 }
 
 const listeners = new Set<(snapshot: SyncStateSnapshot) => void>();
@@ -87,6 +103,166 @@ function isOnline(): boolean {
   return typeof navigator === 'undefined' || typeof navigator.onLine !== 'boolean' ? true : navigator.onLine;
 }
 
+async function handleStageFailure(
+  draft: HydratedTechnicianDraft,
+  failure: StageFailure,
+): Promise<'break_outer' | 'continue'> {
+  if (failure.authError) {
+    const message = failure.errorMessage ?? 'Authentication expired. Sign in again.';
+    await markDraftSyncFailed(draft.id, message, {
+      revertToPending: true,
+      consumeRetry: false,
+    });
+    clearBackoffTimer();
+    emit(
+      {
+        phase: 'paused_auth',
+        isSyncing: false,
+        activeDraftId: null,
+        lastError: message,
+        nextRetryAt: null,
+      },
+      true,
+    );
+    rerunRequested = false;
+    return 'break_outer';
+  }
+
+  if (failure.retryable || failure.networkError || failure.timeoutError) {
+    const message = failure.errorMessage ?? 'Sync failed. Will retry.';
+    const exhausted = draft.retryCount >= MAX_SYNC_RETRIES;
+
+    if (exhausted) {
+      await markDraftSyncFailed(draft.id, message, { revertToPending: false });
+    } else {
+      await markDraftSyncFailed(draft.id, message, {
+        revertToPending: true,
+        consumeRetry: true,
+      });
+    }
+
+    if (!isOnline()) {
+      clearBackoffTimer();
+      emit(
+        {
+          phase: 'paused_offline',
+          isSyncing: false,
+          activeDraftId: null,
+          lastError: message,
+          nextRetryAt: null,
+        },
+        true,
+      );
+    } else {
+      const delayMs = computeBackoffDelayMs(draft.retryCount, failure.retryAfterMs);
+      emit(
+        {
+          phase: exhausted ? 'error' : 'backoff',
+          isSyncing: false,
+          activeDraftId: null,
+          lastError: message,
+        },
+        true,
+      );
+      scheduleBackoff(delayMs);
+    }
+    rerunRequested = false;
+    return 'break_outer';
+  }
+
+  const permanentMessage = failure.errorMessage ?? 'Sync failed.';
+  await markDraftSyncFailed(draft.id, permanentMessage, { revertToPending: false });
+  emit(
+    {
+      activeDraftId: null,
+      lastError: permanentMessage,
+    },
+    true,
+  );
+  return 'continue';
+}
+
+async function syncClaimedDraft(
+  draft: HydratedTechnicianDraft,
+  signal: AbortSignal,
+): Promise<'completed' | 'break_outer' | 'continue'> {
+  let serverRecordingId = draft.serverRecordingId;
+
+  // Stage 1: Upload audio if present and not yet checkpointed.
+  if (draft.audio && draft.audio.size > 0 && !serverRecordingId) {
+    const audioResult = await uploadRecording(draft, signal, UPLOAD_TIMEOUT_MS);
+    if (!audioResult.ok || !audioResult.serverRecordingId) {
+      return handleStageFailure(draft, audioResult);
+    }
+    serverRecordingId = audioResult.serverRecordingId;
+    await markDraftAudioUploaded(draft.id, serverRecordingId);
+  }
+
+  // Stage 2: Sync structured draft metadata idempotently if not yet checkpointed.
+  let serverDraftId = draft.serverDraftId;
+  if (!serverDraftId) {
+    const draftResult = await upsertDraftRequest(
+      {
+        clientDraftId: draft.id,
+        recordingId: serverRecordingId ?? null,
+        captureMode: draft.mode.toLowerCase() === 'voice' ? 'voice' : 'text',
+        equipment: draft.equipment,
+        subsystem: draft.subsystem,
+        symptom: draft.symptom,
+        observation: draft.observation,
+        probableCause: draft.cause,
+        actionTaken: draft.action,
+        partsUsed: draft.parts,
+        safetyNotes: draft.safety,
+        durationMs: draft.durationMs ?? draft.duration ?? null,
+        recordedAt: draft.recordedAt ?? null,
+        clientCreatedAt: draft.createdAt ?? null,
+        clientUpdatedAt: draft.updatedAt ?? null,
+        status: 'PENDING_REVIEW',
+      },
+      signal,
+      UPLOAD_TIMEOUT_MS,
+    );
+    if (!draftResult.ok || !draftResult.data?.draft?.id) {
+      return handleStageFailure(draft, draftResult);
+    }
+    serverDraftId = draftResult.data.draft.id;
+    await markDraftServerSynced(draft.id, serverDraftId);
+  }
+
+  // Stage 3: Upload remaining attachments not yet recorded in syncedAttachmentKeys.
+  const syncedKeys = new Set(draft.syncedAttachmentKeys ?? []);
+  for (let i = 0; i < draft.attachments.length; i += 1) {
+    const att = draft.attachments[i];
+    const key = getDraftAttachmentKey(draft.id, i, att);
+    if (syncedKeys.has(key)) continue;
+
+    const attResult = await uploadDraftAttachmentRequest(
+      serverDraftId,
+      { key, name: att.name, type: att.type, blob: att.blob },
+      signal,
+      UPLOAD_TIMEOUT_MS,
+    );
+    if (!attResult.ok) {
+      return handleStageFailure(draft, attResult);
+    }
+    syncedKeys.add(key);
+    await markDraftAttachmentUploaded(draft.id, key);
+  }
+
+  // Final commit after all required stages succeed.
+  await markDraftSyncCompleted(draft.id, { serverRecordingId, serverDraftId });
+  emit(
+    {
+      activeDraftId: null,
+      lastError: null,
+      lastSyncAt: Date.now(),
+    },
+    true,
+  );
+  return 'completed';
+}
+
 async function drainLoop(): Promise<void> {
   outer: while (true) {
     if (!isOnline()) {
@@ -114,6 +290,9 @@ async function drainLoop(): Promise<void> {
     }
 
     const user = getSessionUser();
+    if (user?.id) {
+      await scopeDraftsToUser(user.id);
+    }
 
     while (true) {
       if (!isOnline()) {
@@ -143,7 +322,7 @@ async function drainLoop(): Promise<void> {
       const draft = await claimNextPendingDraft({
         userId: user?.id,
         leaseDurationMs: UPLOAD_LEASE_DURATION_MS,
-        requireAudio: true,
+        requireAudio: false,
       });
 
       if (!draft) {
@@ -155,146 +334,32 @@ async function drainLoop(): Promise<void> {
         break;
       }
 
-      emit({
-        phase: 'syncing',
-        isSyncing: true,
-        activeDraftId: draft.id,
-        lastError: null,
-        nextRetryAt: null,
-      }, true);
+      emit(
+        {
+          phase: 'syncing',
+          isSyncing: true,
+          activeDraftId: draft.id,
+          lastError: null,
+          nextRetryAt: null,
+        },
+        true,
+      );
 
       const controller = new AbortController();
       activeAbortController = controller;
 
       try {
-        const result = await uploadRecording(draft, controller.signal, UPLOAD_TIMEOUT_MS);
-
-        if (result.ok && result.serverRecordingId) {
-          await markDraftSyncCompleted(draft.id, result.serverRecordingId);
-          emit(
-            {
-              activeDraftId: null,
-              lastError: null,
-              lastSyncAt: Date.now(),
-            },
-            true,
-          );
-          continue;
-        }
-
-        if (result.authError) {
-          const message = result.errorMessage ?? 'Authentication expired. Sign in again.';
-          await markDraftSyncFailed(draft.id, message, {
-            revertToPending: true,
-            consumeRetry: false,
-          });
-          clearBackoffTimer();
-          emit(
-            {
-              phase: 'paused_auth',
-              isSyncing: false,
-              activeDraftId: null,
-              lastError: message,
-              nextRetryAt: null,
-            },
-            true,
-          );
-          rerunRequested = false;
+        const outcome = await syncClaimedDraft(draft, controller.signal);
+        if (outcome === 'break_outer') {
           break outer;
         }
-
-        if (result.retryable || result.networkError || result.timeoutError) {
-          const message = result.errorMessage ?? 'Upload failed. Will retry.';
-          const exhausted = draft.retryCount >= MAX_SYNC_RETRIES;
-
-          if (exhausted) {
-            await markDraftSyncFailed(draft.id, message, { revertToPending: false });
-          } else {
-            await markDraftSyncFailed(draft.id, message, {
-              revertToPending: true,
-              consumeRetry: true,
-            });
-          }
-
-          if (!isOnline()) {
-            clearBackoffTimer();
-            emit(
-              {
-                phase: 'paused_offline',
-                isSyncing: false,
-                activeDraftId: null,
-                lastError: message,
-                nextRetryAt: null,
-              },
-              true,
-            );
-          } else {
-            const delayMs = computeBackoffDelayMs(draft.retryCount, result.retryAfterMs);
-            emit(
-              {
-                phase: exhausted ? 'error' : 'backoff',
-                isSyncing: false,
-                activeDraftId: null,
-                lastError: message,
-              },
-              true,
-            );
-            scheduleBackoff(delayMs);
-          }
-          rerunRequested = false;
-          break outer;
-        }
-
-        // Permanent client/payload failure (e.g. 400 / 413 / 415 / 422): isolate and continue.
-        const permanentMessage = result.errorMessage ?? 'Upload failed.';
-        await markDraftSyncFailed(draft.id, permanentMessage, { revertToPending: false });
-        emit(
-          {
-            activeDraftId: null,
-            lastError: permanentMessage,
-          },
-          true,
-        );
+        continue;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Upload failed.';
-        const exhausted = draft.retryCount >= MAX_SYNC_RETRIES;
-
-        if (exhausted) {
-          await markDraftSyncFailed(draft.id, message, { revertToPending: false });
-        } else {
-          await markDraftSyncFailed(draft.id, message, {
-            revertToPending: true,
-            consumeRetry: true,
-          });
+        const message = error instanceof Error ? error.message : 'Sync failed.';
+        const action = await handleStageFailure(draft, { retryable: true, errorMessage: message });
+        if (action === 'break_outer') {
+          break outer;
         }
-
-        if (!isOnline()) {
-          clearBackoffTimer();
-          emit(
-            {
-              phase: 'paused_offline',
-              isSyncing: false,
-              activeDraftId: null,
-              lastError: message,
-              nextRetryAt: null,
-            },
-            true,
-          );
-        } else {
-          const delayMs = computeBackoffDelayMs(draft.retryCount);
-          emit(
-            {
-              phase: exhausted ? 'error' : 'backoff',
-              isSyncing: false,
-              activeDraftId: null,
-              lastError: message,
-            },
-            true,
-          );
-          scheduleBackoff(delayMs);
-        }
-        rerunRequested = false;
-        break outer;
       } finally {
         if (activeAbortController === controller) {
           activeAbortController = null;
