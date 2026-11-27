@@ -8,12 +8,15 @@ import {
   deleteDraft,
   getDrafts,
   getStorageQuotaStatus,
+  retryFailedDraft,
   saveDraft,
   type DraftSyncStatus,
   type StorageQuotaStatus,
   type TechnicianDraft,
 } from '../features/draftStore';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useSyncStatus } from '../hooks/useSyncStatus';
+import { syncPendingDrafts, type SyncStateSnapshot } from '../services/syncManager';
 import { Brand } from '../component/technicainComponent/Brand';
 import { Icon } from '../component/technicainComponent/Icons';
 
@@ -118,20 +121,39 @@ function Status({ online }: { online: boolean }) {
   );
 }
 
+function formatHeaderSyncLabel(online: boolean, syncState: SyncStateSnapshot, pendingCount: number): string {
+  if (!online || syncState.phase === 'paused_offline') return 'Sync paused (offline)';
+  if (syncState.phase === 'paused_auth') return 'Sign in to sync';
+  if (syncState.isSyncing) return 'Syncing…';
+  if (syncState.phase === 'backoff') {
+    return pendingCount > 0 ? `Retry queued (${pendingCount})` : 'Retry scheduled';
+  }
+  if (pendingCount > 0) return `Pending (${pendingCount})`;
+  if (syncState.lastSyncAt) return 'Synced';
+  return 'Sync idle';
+}
+
 function Header({
   page,
   online,
   draftsCount,
+  pendingCount,
+  syncState,
+  onSyncNow,
   navigate,
 }: {
   page: Page;
   online: boolean;
   draftsCount: number;
+  pendingCount: number;
+  syncState: SyncStateSnapshot;
+  onSyncNow: () => void;
   navigate: (page: Page) => void;
 }) {
   const navigateToRoute = useNavigate();
   const currentUser = getCurrentUser();
   const logout = () => { clearSession(); navigateToRoute('/', { replace: true }); };
+  const syncLabel = formatHeaderSyncLabel(online, syncState, pendingCount);
   const links: { id: Page; label: string; icon: 'mic' | 'file' | 'search' | 'user' }[] = [
     { id: 'capture', label: 'Capture', icon: 'mic' },
     { id: 'drafts', label: `Drafts${draftsCount > 0 ? ` (${draftsCount})` : ''}`, icon: 'file' },
@@ -164,9 +186,17 @@ function Header({
       <div className="topbar-status">
         <Status online={online} />
         {currentUser && <button type="button" className="top-link" onClick={logout}>Log out</button>}
-        <span className="sync-state">
-          <Icon name="refresh" /> Sync idle
-        </span>
+        <button
+          type="button"
+          className="top-link sync-state"
+          onClick={onSyncNow}
+          disabled={!online || syncState.isSyncing}
+          aria-label="Sync pending drafts"
+          title={online ? 'Sync pending audio drafts now' : 'Offline — sync will resume when online'}
+        >
+          <Icon name="refresh" />
+          <span>{syncLabel}</span>
+        </button>
         {/* <Link
           to="/supervisor"
           className="top-link"
@@ -879,7 +909,7 @@ function CapturePage({
               </div>
 
               <p className="storage-hint">
-                Knowledge-base publishing and server synchronization are not connected in this workflow yet.
+                Saved locally. Audio notes sync automatically in the background when online and signed in.
               </p>
 
               <div className="technician-flow-actions">
@@ -968,6 +998,7 @@ function DraftsPage({
   storageError,
   onDismissStorageError,
   onRemove,
+  onRetry,
   onRecover,
   onNavigateToCapture,
 }: {
@@ -976,6 +1007,7 @@ function DraftsPage({
   storageError: string | null;
   onDismissStorageError: () => void;
   onRemove: (id: string) => void;
+  onRetry: (id: string) => void;
   onRecover: () => void;
   onNavigateToCapture: () => void;
 }) {
@@ -1142,6 +1174,17 @@ function DraftsPage({
                     <DraftMedia draft={draft} mediaUrls={mediaUrlsById[draft.id]} />
                   </div>
                   <SyncStatusBadge status={syncStatus} />
+                  {syncStatus === 'failed' && (
+                    <button
+                      type="button"
+                      className="button-light"
+                      aria-label="Retry sync"
+                      onClick={() => onRetry(draft.id)}
+                      style={{ minHeight: '34px', padding: '6px 10px' }}
+                    >
+                      <Icon name="refresh" /> Retry
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="icon-button"
@@ -1168,7 +1211,7 @@ function DraftsPage({
         )}
       </section>
       <p className="storage-hint">
-        Saved notes, audio, and attachments remain on this device until a sync service is connected.
+        Saved notes, audio, and attachments stay stored locally on this device; audio notes sync automatically when online and signed in.
       </p>
     </>
   );
@@ -1345,6 +1388,7 @@ function ProfilePage({ online }: { online: boolean }) {
 
 export const TechnicianPage: React.FC = () => {
   const online = useNetworkStatus();
+  const { syncState, triggerSync } = useSyncStatus();
   const currentUserId = getCurrentUser()?.id;
   const [page, setPage] = useState<Page>('capture');
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -1407,6 +1451,23 @@ export const TechnicianPage: React.FC = () => {
     };
   }, [loadScopedDrafts]);
 
+  useEffect(() => {
+    if (syncState.revision === 0) return;
+    let active = true;
+    void loadScopedDrafts()
+      .then((saved) => {
+        if (!active) return;
+        setDrafts(saved);
+        return refreshQuotaStatus();
+      })
+      .catch(() => {
+        /* Ignore background refresh failures; explicit user actions surface storage errors. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [syncState.revision, loadScopedDrafts, refreshQuotaStatus]);
+
   const save = async (draft: Draft) => {
     try {
       await saveDraft(draft);
@@ -1418,6 +1479,9 @@ export const TechnicianPage: React.FC = () => {
         setDrafts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
       }
       await refreshQuotaStatus();
+      if (draft.audio && navigator.onLine) {
+        void syncPendingDrafts();
+      }
     } catch (error) {
       const message = extractStorageErrorMessage(
         error,
@@ -1425,6 +1489,22 @@ export const TechnicianPage: React.FC = () => {
       );
       setStorageError(message);
       throw error;
+    }
+  };
+
+  const retry = async (id: string) => {
+    try {
+      await retryFailedDraft(id);
+      setStorageError(null);
+      const refreshed = await loadScopedDrafts();
+      setDrafts(refreshed);
+      if (navigator.onLine) {
+        void syncPendingDrafts({ manual: true });
+      }
+    } catch (error) {
+      setStorageError(
+        extractStorageErrorMessage(error, 'Could not reset this draft for retry.'),
+      );
     }
   };
 
@@ -1440,6 +1520,15 @@ export const TechnicianPage: React.FC = () => {
       );
     }
   };
+
+  const pendingCount = useMemo(
+    () =>
+      drafts.filter((draft) => {
+        const status = normalizeSyncStatusLabel(draft.syncStatus);
+        return status === 'pending' || status === 'uploading';
+      }).length,
+    [drafts],
+  );
 
   const title = useMemo(
     () =>
@@ -1458,6 +1547,9 @@ export const TechnicianPage: React.FC = () => {
         page={page}
         online={online}
         draftsCount={drafts.length}
+        pendingCount={pendingCount}
+        syncState={syncState}
+        onSyncNow={() => void triggerSync()}
         navigate={setPage}
       />
 
@@ -1488,6 +1580,7 @@ export const TechnicianPage: React.FC = () => {
             storageError={storageError}
             onDismissStorageError={() => setStorageError(null)}
             onRemove={(id) => void remove(id)}
+            onRetry={(id) => void retry(id)}
             onRecover={() => void recover()}
             onNavigateToCapture={() => setPage('capture')}
           />

@@ -213,6 +213,11 @@ function getBinaryByteLength(buffer: unknown, legacyBlob: unknown): number | und
   return undefined;
 }
 
+function hasStoredAudio(record: StoredDraftRecord): boolean {
+  const byteLength = getBinaryByteLength(record.audioBuffer, record.audio);
+  return byteLength !== undefined && byteLength > 0;
+}
+
 function reconstructBlob(buffer: unknown, legacyBlob: unknown, mimeType: string): Blob | undefined {
   const safeType = mimeType || 'application/octet-stream';
   if (buffer instanceof ArrayBuffer) {
@@ -782,9 +787,11 @@ export async function deleteDraft(id: string): Promise<void> {
 export async function claimNextPendingDraft(options?: {
   userId?: string;
   leaseDurationMs?: number;
+  requireAudio?: boolean;
 }): Promise<HydratedTechnicianDraft | null> {
   const leaseDurationMs = options?.leaseDurationMs ?? DEFAULT_LEASE_DURATION_MS;
   const userId = options?.userId;
+  const requireAudio = options?.requireAudio ?? false;
   const db = await openDatabase();
 
   try {
@@ -832,6 +839,11 @@ export async function claimNextPendingDraft(options?: {
         pendingReq.onsuccess = () => {
           const cursor = pendingReq.result;
           if (!cursor) return;
+          const record = cursor.value as StoredDraftRecord;
+          if (requireAudio && !hasStoredAudio(record)) {
+            cursor.continue();
+            return;
+          }
           claimCursor(cursor);
         };
         pendingReq.onerror = () => {
@@ -848,7 +860,7 @@ export async function claimNextPendingDraft(options?: {
         }
         const record = cursor.value as StoredDraftRecord;
         const isStale = record.lastAttemptAt === undefined || record.lastAttemptAt < staleBefore;
-        if (isStale) {
+        if (isStale && (!requireAudio || hasStoredAudio(record))) {
           claimCursor(cursor);
           return;
         }
@@ -942,7 +954,7 @@ export async function markDraftSyncCompleted(id: string, serverRecordingId: stri
 export async function markDraftSyncFailed(
   id: string,
   errorMessage: string,
-  options?: { revertToPending?: boolean },
+  options?: { revertToPending?: boolean; consumeRetry?: boolean },
 ): Promise<void> {
   await updateDraftRecord(
     id,
@@ -950,10 +962,11 @@ export async function markDraftSyncFailed(
       if (options?.revertToPending) {
         const currentRetries =
           typeof record.retryCount === 'number' && Number.isFinite(record.retryCount) ? record.retryCount : 0;
+        const nextRetryCount = options.consumeRetry ? currentRetries : Math.max(0, currentRetries - 1);
         return {
           ...record,
           syncStatus: 'pending',
-          retryCount: Math.max(0, currentRetries - 1),
+          retryCount: nextRetryCount,
           lastError: errorMessage,
           updatedAt: now,
         };
