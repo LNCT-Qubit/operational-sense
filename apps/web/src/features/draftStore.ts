@@ -46,6 +46,8 @@ export type TechnicianDraft = {
   lastAttemptAt?: number;
   lastError?: string;
   serverRecordingId?: string;
+  serverDraftId?: string;
+  syncedAttachmentKeys?: string[];
 };
 
 export type HydratedTechnicianDraft = Omit<
@@ -137,6 +139,8 @@ interface StoredDraftRecord {
   lastAttemptAt?: number;
   lastError?: string;
   serverRecordingId?: string;
+  serverDraftId?: string;
+  syncedAttachmentKeys?: string[];
 }
 
 const DB_NAME = 'workshop-note';
@@ -336,6 +340,8 @@ function hydrateRecord(record: StoredDraftRecord): HydratedTechnicianDraft {
     ...(record.lastAttemptAt !== undefined ? { lastAttemptAt: record.lastAttemptAt } : {}),
     ...(record.lastError !== undefined ? { lastError: record.lastError } : {}),
     ...(record.serverRecordingId !== undefined ? { serverRecordingId: record.serverRecordingId } : {}),
+    ...(record.serverDraftId !== undefined ? { serverDraftId: record.serverDraftId } : {}),
+    ...(Array.isArray(record.syncedAttachmentKeys) ? { syncedAttachmentKeys: [...record.syncedAttachmentKeys] } : {}),
   };
 }
 
@@ -386,6 +392,8 @@ function toDraftSummary(record: StoredDraftRecord): DraftSummary {
     ...(record.lastAttemptAt !== undefined ? { lastAttemptAt: record.lastAttemptAt } : {}),
     ...(record.lastError !== undefined ? { lastError: record.lastError } : {}),
     ...(record.serverRecordingId !== undefined ? { serverRecordingId: record.serverRecordingId } : {}),
+    ...(record.serverDraftId !== undefined ? { serverDraftId: record.serverDraftId } : {}),
+    ...(Array.isArray(record.syncedAttachmentKeys) ? { syncedAttachmentKeys: [...record.syncedAttachmentKeys] } : {}),
     hasAudio,
   };
 }
@@ -738,6 +746,8 @@ export async function saveDraft(draft: SaveDraftInput): Promise<void> {
     ...(draft.lastAttemptAt !== undefined ? { lastAttemptAt: draft.lastAttemptAt } : {}),
     ...(draft.lastError !== undefined ? { lastError: draft.lastError } : {}),
     ...(draft.serverRecordingId !== undefined ? { serverRecordingId: draft.serverRecordingId } : {}),
+    ...(draft.serverDraftId !== undefined ? { serverDraftId: draft.serverDraftId } : {}),
+    ...(Array.isArray(draft.syncedAttachmentKeys) ? { syncedAttachmentKeys: [...draft.syncedAttachmentKeys] } : {}),
   };
 
   // 4. Open readwrite transaction with zero awaits inside.
@@ -934,14 +944,129 @@ async function updateDraftRecord(
   }
 }
 
-export async function markDraftSyncCompleted(id: string, serverRecordingId: string): Promise<void> {
+export function getDraftAttachmentKey(
+  draftId: string,
+  index: number,
+  attachment: Pick<DraftAttachment, 'name' | 'size'>,
+): string {
+  return `${draftId}:${index}:${attachment.name}:${attachment.size}`;
+}
+
+export async function scopeDraftsToUser(userId: string): Promise<number> {
+  if (!userId) return 0;
+  const db = await openDatabase();
+  try {
+    return await new Promise<number>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      const cursorReq = store.openCursor();
+      let updatedCount = 0;
+
+      cursorReq.onsuccess = () => {
+        const cursor = cursorReq.result;
+        if (!cursor) return;
+        const record = cursor.value as StoredDraftRecord;
+        if (record.userId === undefined || record.userId === '') {
+          const nextRecord: StoredDraftRecord = {
+            ...record,
+            userId,
+            updatedAt: Date.now(),
+          };
+          const updateReq = cursor.update(nextRecord);
+          updateReq.onsuccess = () => {
+            updatedCount += 1;
+          };
+          updateReq.onerror = () => {
+            reject(mapTransactionError(updateReq.error, 'Could not bind offline draft to signed-in user.'));
+          };
+        }
+        cursor.continue();
+      };
+      cursorReq.onerror = () => {
+        reject(mapTransactionError(cursorReq.error, 'Could not scan offline drafts for user binding.'));
+      };
+      tx.oncomplete = () => resolve(updatedCount);
+      tx.onerror = () => {
+        reject(mapTransactionError(tx.error, 'Could not bind offline drafts to signed-in user.'));
+      };
+      tx.onabort = () => {
+        reject(mapTransactionError(tx.error, 'Binding offline drafts was aborted.'));
+      };
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function markDraftAudioUploaded(id: string, serverRecordingId: string): Promise<void> {
+  await updateDraftRecord(
+    id,
+    (record, now) => {
+      const next: StoredDraftRecord = {
+        ...record,
+        serverRecordingId,
+        lastAttemptAt: now,
+        updatedAt: now,
+      };
+      delete next.lastError;
+      return next;
+    },
+    'Could not checkpoint uploaded audio ID.',
+  );
+}
+
+export async function markDraftServerSynced(id: string, serverDraftId: string): Promise<void> {
+  await updateDraftRecord(
+    id,
+    (record, now) => {
+      const next: StoredDraftRecord = {
+        ...record,
+        serverDraftId,
+        lastAttemptAt: now,
+        updatedAt: now,
+      };
+      delete next.lastError;
+      return next;
+    },
+    'Could not checkpoint server draft ID.',
+  );
+}
+
+export async function markDraftAttachmentUploaded(id: string, attachmentKey: string): Promise<void> {
+  await updateDraftRecord(
+    id,
+    (record, now) => {
+      const existingKeys = Array.isArray(record.syncedAttachmentKeys) ? record.syncedAttachmentKeys : [];
+      const syncedAttachmentKeys = existingKeys.includes(attachmentKey)
+        ? existingKeys
+        : [...existingKeys, attachmentKey];
+      const next: StoredDraftRecord = {
+        ...record,
+        syncedAttachmentKeys,
+        lastAttemptAt: now,
+        updatedAt: now,
+      };
+      delete next.lastError;
+      return next;
+    },
+    'Could not checkpoint uploaded draft attachment.',
+  );
+}
+
+export async function markDraftSyncCompleted(
+  id: string,
+  result: string | { serverRecordingId?: string; serverDraftId?: string },
+): Promise<void> {
+  const serverRecordingId = typeof result === 'string' ? result : result.serverRecordingId;
+  const serverDraftId = typeof result === 'string' ? undefined : result.serverDraftId;
   await updateDraftRecord(
     id,
     (record, now) => {
       const next: StoredDraftRecord = {
         ...record,
         syncStatus: 'completed',
-        serverRecordingId,
+        ...(serverRecordingId !== undefined ? { serverRecordingId } : {}),
+        ...(serverDraftId !== undefined ? { serverDraftId } : {}),
         updatedAt: now,
       };
       delete next.lastError;

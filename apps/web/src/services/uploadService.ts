@@ -168,12 +168,22 @@ export async function uploadRecording(
       ? parseRetryAfterMs(response.headers?.get?.('Retry-After'))
       : undefined;
 
+    let detailMessage = '';
+    try {
+      const errBody = (await response.json()) as { error?: { message?: unknown } } | null;
+      if (typeof errBody?.error?.message === 'string' && errBody.error.message.trim()) {
+        detailMessage = `: ${errBody.error.message.trim()}`;
+      }
+    } catch {
+      /* non-JSON or mocked Response without json() */
+    }
+
     return {
       ok: false,
       retryable,
       httpStatus: response.status,
       ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
-      errorMessage: `Upload failed with HTTP ${response.status}.`,
+      errorMessage: `Upload failed with HTTP ${response.status}${detailMessage}.`,
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {

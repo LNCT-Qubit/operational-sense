@@ -37,6 +37,26 @@ export function isDatabaseUnavailable(err: unknown): boolean {
   );
 }
 
+/** Maps PostgreSQL SQLSTATE constraint/type/permission errors into safe client HTTP envelopes. */
+export function mapPgError(err: unknown): ApiError | null {
+  const code = (err as { code?: string } | null)?.code;
+  if (!code) return null;
+  switch (code) {
+    case '22P02':
+      return badRequest('INVALID_PARAMETER', 'One or more identifiers or input values have an invalid format.');
+    case '23505':
+      return conflict('CONFLICT', 'A conflicting record already exists.');
+    case '23503':
+      return badRequest('INVALID_REFERENCE', 'Referenced record does not exist or cannot be linked.');
+    case '23514':
+      return badRequest('CONSTRAINT_VIOLATION', 'The supplied values violate a validation constraint.');
+    case '42501':
+      return new ApiError(500, 'INTERNAL_ERROR', 'An unexpected error occurred');
+    default:
+      return null;
+  }
+}
+
 export function toApiError(err: unknown): ApiError {
   if (err instanceof ApiError) return err;
   const e = err as { status?: number; type?: string; code?: string } | null;
@@ -45,6 +65,8 @@ export function toApiError(err: unknown): ApiError {
   // express.json() signals a malformed JSON body this way
   if (e?.type === 'entity.parse.failed') return badRequest('INVALID_JSON', 'The request body is not valid JSON.');
   if (isDatabaseUnavailable(err)) return new ApiError(503, 'DATABASE_UNAVAILABLE', 'The service is temporarily unavailable. Please retry.');
+  const pgErr = mapPgError(err);
+  if (pgErr) return pgErr;
   return new ApiError(500, 'INTERNAL_ERROR', 'An unexpected error occurred');
 }
 
@@ -63,11 +85,12 @@ export function errorMiddleware(logger: Logger) {
     const cid = req.correlationId ?? 'unknown';
     const meta = { correlation_id: cid, status: api.status, code: api.code, method: req.method };
     if (api.status >= 500) {
-      const real = err as Error;
-      logger.error('request failed', { ...meta, error_name: real?.name, error_message: real?.message });
+      const real = err as Error & { code?: string };
+      logger.error('request failed', { ...meta, error_name: real?.name, sqlstate: real?.code, error_message: real?.message });
     } else {
       logger.debug('request rejected', meta);
     }
+    if ((res as { headersSent?: boolean }).headersSent) return;
     res.status(api.status).json({
       error: { code: api.code, message: api.message, correlation_id: cid, ...(api.details ? { details: api.details } : {}) },
     });

@@ -98,6 +98,18 @@ export class CaptureService {
     return draft;
   }
 
+  async getAudioStream(ctx: AuthContext, recordingId: string) {
+    const rec = await this.mustGet(ctx, recordingId);
+    if (!this.storage.openRead) {
+      throw notFound('Recording audio streaming is unavailable.', 'AUDIO_FILE_NOT_FOUND');
+    }
+    const opened = await this.storage.openRead(rec.storage_uri);
+    if (!opened) {
+      throw notFound('Recording audio file not found.', 'AUDIO_FILE_NOT_FOUND');
+    }
+    return { mimeType: rec.mime_type, sizeBytes: opened.sizeBytes, openStream: opened.openStream };
+  }
+
   // ------------------------------------------------------------------ processing
   /** Fire-and-forget processing for the upload path. Failures are recorded on the recording, never thrown. */
   schedule(ctx: AuthContext, recordingId: string): void {

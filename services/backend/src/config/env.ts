@@ -21,7 +21,7 @@ export interface AppConfig {
 }
 
 const DEFAULT_MIME =
-  'audio/wav,audio/x-wav,audio/wave,audio/mpeg,audio/flac,audio/x-flac,audio/ogg';
+  'audio/wav,audio/x-wav,audio/wave,audio/mpeg,audio/flac,audio/x-flac,audio/ogg,audio/webm,audio/mp4,audio/x-m4a';
 
 function int(env: NodeJS.ProcessEnv, name: string, fallback: number, min: number, max: number, errors: string[]): number {
   const raw = env[name];

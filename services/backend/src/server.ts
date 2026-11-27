@@ -12,6 +12,14 @@ import { PostgresUserStore } from './modules/users/user.repository';
 import { createBcryptHasher } from './modules/users/password-hasher';
 import { SignupService } from './modules/users/signup.service';
 import { LoginService } from './modules/users/login.service';
+import { LocalAttachmentStorage } from './modules/drafts/attachment-storage';
+import { PostgresDraftSyncStore } from './modules/drafts/draft.repository';
+import { TechnicianDraftService } from './modules/drafts/draft.service';
+import { PostgresCaseStore } from './modules/cases/case.repository';
+import { CaseService } from './modules/cases/case.service';
+import { PostgresAssetStore } from './modules/assets/asset.repository';
+import { AssetService } from './modules/assets/asset.service';
+import { PostgresTaxonomyStore, TaxonomyService } from './modules/taxonomy/taxonomy.routes';
 
 async function main(): Promise<void> {
   try { require('dotenv').config(); } catch { /* dotenv is optional: real environments inject variables */ }
@@ -34,6 +42,15 @@ async function main(): Promise<void> {
     logger,
   );
 
+  const draftService = new TechnicianDraftService(
+    new PostgresDraftSyncStore(pool),
+    new LocalAttachmentStorage(config.uploadDir),
+    logger,
+  );
+  const caseService = new CaseService(new PostgresCaseStore(pool));
+  const assetService = new AssetService(new PostgresAssetStore(pool));
+  const taxonomyService = new TaxonomyService(new PostgresTaxonomyStore(pool));
+
   const userStore = new PostgresUserStore(pool);
   const hasher = createBcryptHasher(config.signup.bcryptRounds);   // one hasher shared by signup (hash) and login (compare)
   const signupService = new SignupService(userStore, hasher, { organizationName: config.signup.organizationName }, logger);
@@ -45,12 +62,22 @@ async function main(): Promise<void> {
     }
   } catch { logger.warn('could not check the signup organization: has migration 010_users.sql been applied?'); }
 
-  const app = createApp({ config, service, logger, signup: { service: signupService, loginService, corsAllowedOrigins: config.signup.corsAllowedOrigins }, ping: async () => { await pool.query('SELECT 1'); } });
+  const app = createApp({
+    config,
+    service,
+    logger,
+    signup: { service: signupService, loginService, corsAllowedOrigins: config.signup.corsAllowedOrigins },
+    drafts: { service: draftService },
+    cases: { service: caseService },
+    assets: { service: assetService },
+    taxonomy: { service: taxonomyService },
+    ping: async () => { await pool.query('SELECT 1'); },
+  });
   const server = app.listen(config.port, () => logger.info('backend listening', { port: config.port }));
 
   const shutdown = async (signal: string) => {
     logger.info('shutting down', { signal });
-    server.close();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     await service.idle();                          // let in-flight processing finish and persist its state
     await pool.end();
     process.exit(0);

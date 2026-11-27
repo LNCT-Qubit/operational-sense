@@ -1,5 +1,6 @@
+import { pipeStreamToResponse } from '../../http/stream';
 import { asyncHandler, type Handler, type HttpRequest } from '../../http/types';
-import { badRequest, payloadTooLarge, unsupportedMediaType } from '../../http/errors';
+import { ApiError, badRequest, payloadTooLarge, unsupportedMediaType } from '../../http/errors';
 import { isUuid } from '../../middleware/auth';
 import { checkAudio } from './audio-format';
 import { isRetryable, type CaptureService, type CaptureState } from './recording.service';
@@ -150,5 +151,42 @@ export function createRecordingHandlers(service: CaptureService, cfg: HandlerCon
     res.status(200).json({ draft: draftView(d) });
   });
 
-  return { upload, get, list, processRecording, getDraft };
+  /** GET /api/v1/recordings/:id/audio */
+  const getAudio: Handler = asyncHandler(async (req, res) => {
+    const audio = await service.getAudioStream(req.auth!, idParam(req));
+    const total = audio.sizeBytes;
+    const rangeHeader = headerOf(req, 'range');
+
+    res.setHeader('Content-Type', audio.mimeType);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    let stream: NodeJS.ReadableStream;
+    if (rangeHeader) {
+      const m = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
+      if (!m || (!m[1] && !m[2])) {
+        res.setHeader('Content-Range', `bytes */${total}`);
+        throw new ApiError(416, 'RANGE_NOT_SATISFIABLE', 'Requested byte range is not satisfiable.');
+      }
+      const start = m[1] ? Number(m[1]) : Math.max(0, total - Number(m[2]));
+      const end = m[1] && m[2] ? Math.min(Number(m[2]), total - 1) : total - 1;
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start > end || start >= total) {
+        res.setHeader('Content-Range', `bytes */${total}`);
+        throw new ApiError(416, 'RANGE_NOT_SATISFIABLE', 'Requested byte range is not satisfiable.');
+      }
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
+      res.setHeader('Content-Length', String(end - start + 1));
+      res.status(206);
+      stream = audio.openStream({ start, end });
+    } else {
+      res.setHeader('Content-Length', String(total));
+      res.status(200);
+      stream = audio.openStream();
+    }
+
+    await pipeStreamToResponse(res, stream);
+  });
+
+  return { upload, get, list, processRecording, getDraft, getAudio };
 }

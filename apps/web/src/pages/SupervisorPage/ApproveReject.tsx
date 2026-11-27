@@ -19,19 +19,31 @@ export default function ApproveReject() {
   const navigate = useNavigate()
   const { cases, decide, createDecided, flash } = useCases()
   const [draft, setDraft] = useState<Draft>({ id: '', equipment: '', issue: '', by: '' })
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const current = cases.find(c => c.id === id)
+  const current = cases.find((c) => c.id === id)
   const data = current ?? draft
   const locked = !!current && current.status !== 'Pending'
 
-  const submit = (status: Decision) => {
-    if (current) {
-      decide(current.id, status)
-    } else {
-      const error = createDecided(draft, status)
-      if (error) return flash(error)
+  const submit = async (status: Decision) => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      if (current) {
+        const ok = await decide(current.id, status, comment.trim() || undefined)
+        if (ok) navigate('/supervisor/queue')
+      } else {
+        const error = await createDecided(draft, status)
+        if (error) {
+          flash(error)
+          return
+        }
+        navigate('/supervisor/queue')
+      }
+    } finally {
+      setSubmitting(false)
     }
-    navigate('/supervisor/queue')
   }
 
   return (
@@ -41,20 +53,27 @@ export default function ApproveReject() {
         <Panel title="Select case" subtitle="Choose a case from the queue to review.">
           <label className="field">
             <span>Case</span>
-            <select value={id ?? ''} onChange={e => navigate(e.target.value ? `/supervisor/decide/${e.target.value}` : '/supervisor/decide')}>
+            <select
+              value={id ?? ''}
+              onChange={(e) => navigate(e.target.value ? `/supervisor/decide/${e.target.value}` : '/supervisor/decide')}
+            >
               <option value="">New case</option>
-              {cases.map(c => (
-                <option key={c.id} value={c.id}>{c.id} · {c.equipment} ({c.status})</option>
+              {cases.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.id.slice(0, 8)} · {c.equipment} ({c.status})
+                </option>
               ))}
             </select>
           </label>
-          
+
           <div className="decide-summary">
             <EmptyState
-              title={current?.id ?? 'No case selected'}
+              title={current?.equipment ?? 'No case selected'}
               text={current ? `${current.equipment}: ${current.issue}` : 'Pick a case from the Review Queue to approve or reject it.'}
             />
-            <Link to="/supervisor/queue" className="button-light"><Icon name="list" /> Open Review Queue</Link>
+            <Link to="/supervisor/queue" className="button-light">
+              <Icon name="list" /> Open Review Queue
+            </Link>
           </div>
         </Panel>
 
@@ -68,19 +87,44 @@ export default function ApproveReject() {
               <label key={key} className="field">
                 <span>{label}</span>
                 <input
-                  value={data[key]}
-                  readOnly={!!current}
-                  onChange={e => setDraft({ ...draft, [key]: e.target.value })}
+                  value={String(data[key] ?? '')}
+                  readOnly={!!current || key === 'id'}
+                  placeholder={key === 'id' && !current ? 'Generated automatically on submit' : undefined}
+                  onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
                 />
               </label>
             ))}
+
+            {current?.observation && (
+              <label className="field">
+                <span>Observation</span>
+                <textarea value={current.observation} readOnly />
+              </label>
+            )}
+            {current?.transcriptionText && (
+              <label className="field">
+                <span>Transcript</span>
+                <textarea value={current.transcriptionText} readOnly />
+              </label>
+            )}
+            {current && (
+              <label className="field">
+                <span>Review comment (optional)</span>
+                <input
+                  value={locked ? (current.reviewComment ?? '') : comment}
+                  readOnly={locked}
+                  placeholder="Add verification note or rejection reason…"
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </label>
+            )}
           </div>
 
           <div className="review-actions">
-            <button className="button-danger" disabled={locked} onClick={() => submit('Rejected')}>
+            <button type="button" className="button-danger" disabled={locked || submitting} onClick={() => void submit('Rejected')}>
               <Icon name="close" /> Reject
             </button>
-            <button className="button-primary" disabled={locked} onClick={() => submit('Approved')}>
+            <button type="button" className="button-primary" disabled={locked || submitting} onClick={() => void submit('Approved')}>
               <Icon name="check" /> Approve
             </button>
           </div>
