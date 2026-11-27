@@ -1,9 +1,18 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { clearSession, getCurrentUser } from '../api/session';
 import { formatDuration, useAudioRecorder } from '../features/useAudioRecorder';
-import { deleteDraft, getDrafts, saveDraft, type TechnicianDraft } from '../features/draftStore';
+import {
+  DraftStorageError,
+  deleteDraft,
+  getDrafts,
+  getStorageQuotaStatus,
+  saveDraft,
+  type DraftSyncStatus,
+  type StorageQuotaStatus,
+  type TechnicianDraft,
+} from '../features/draftStore';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { Brand } from '../component/technicainComponent/Brand';
 import { Icon } from '../component/technicainComponent/Icons';
@@ -11,6 +20,80 @@ import { Icon } from '../component/technicainComponent/Icons';
 type Page = 'capture' | 'drafts' | 'search' | 'profile';
 type Draft = TechnicianDraft;
 type CaptureStage = 'capture' | 'review' | 'processing' | 'success';
+
+type DraftMediaUrls = {
+  audioUrl?: string;
+  attachmentUrls: string[];
+};
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function normalizeSyncStatusLabel(status: Draft['syncStatus']): DraftSyncStatus {
+  return status === 'local' ? 'pending' : status;
+}
+
+function scopeDraftsToUser(allDrafts: Draft[], userId?: string): Draft[] {
+  if (!userId) {
+    return allDrafts.filter((draft) => !draft.userId);
+  }
+  return allDrafts.filter((draft) => !draft.userId || draft.userId === userId);
+}
+
+function extractStorageErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof DraftStorageError) return error.userMessage;
+  return fallback;
+}
+
+function StorageAlertBanner({
+  message,
+  onDismiss,
+}: {
+  message: string;
+  onDismiss?: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '10px',
+        marginBottom: '16px',
+        padding: '12px 14px',
+        border: '1px solid #e7c2bc',
+        borderRadius: '10px',
+        background: '#fbe9e6',
+        color: '#a23d2f',
+        fontSize: '12px',
+        lineHeight: 1.45,
+      }}
+    >
+      <Icon name="alert" style={{ width: '17px', height: '17px', flexShrink: 0, marginTop: '1px' }} />
+      <span style={{ flex: 1, fontWeight: 600 }}>{message}</span>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss storage alert"
+          style={{
+            background: 'transparent',
+            color: '#a23d2f',
+            padding: '2px 4px',
+            lineHeight: 1,
+            fontWeight: 700,
+          }}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
 
 const emptyDraft = (): Pick<Draft, 'observation' | 'equipment' | 'subsystem' | 'symptom' | 'cause' | 'action' | 'parts' | 'safety' | 'mode' | 'duration'> => ({
   observation: '',
@@ -144,7 +227,15 @@ function Field({
   );
 }
 
-function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
+function CapturePage({
+  onSave,
+  storageError,
+  onDismissStorageError,
+}: {
+  onSave: (draft: Draft) => Promise<void>;
+  storageError: string | null;
+  onDismissStorageError: () => void;
+}) {
   const recorder = useAudioRecorder();
   const [mode, setMode] = useState<'voice' | 'text'>('voice');
   const [form, setForm] = useState(emptyDraft);
@@ -181,32 +272,46 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
     setSaving(true);
 
     const draftId = crypto.randomUUID();
+    const recordedAt = new Date().toISOString();
+    const audio = recorder.audioBlob ?? undefined;
+    const audioMimeType = audio ? audio.type || recorder.mimeType || undefined : undefined;
+    const currentUser = getCurrentUser();
 
     try {
       await onSave({
         ...form,
         id: draftId,
-        date: new Date().toISOString(),
+        date: recordedAt,
+        recordedAt,
         mode: mode === 'voice' ? 'Voice' : 'Text',
         duration: recorder.durationMs,
-        audio: recorder.audioBlob ?? undefined,
-        audioType: recorder.mimeType ?? undefined,
+        durationMs: recorder.durationMs,
+        audio,
+        audioType: audioMimeType,
+        audioMimeType,
+        audioSizeBytes: audio?.size,
+        userId: currentUser?.id,
         attachments: files.map((file) => ({
           name: file.name,
           type: file.type,
           size: file.size,
           blob: file,
         })),
-        syncStatus: 'local',
+        syncStatus: 'pending',
       });
 
+      setMessage('');
       setReferenceId(draftId);
       setForm(emptyDraft());
       setFiles([]);
       recorder.discardRecording();
       setStage('success');
-    } catch {
-      setMessage('Could not save this draft. Check available device storage and try again.');
+    } catch (error) {
+      if (!(error instanceof DraftStorageError)) {
+        setMessage('Could not save this draft. Check available device storage and try again.');
+      } else {
+        setMessage('');
+      }
       setStage('review');
     } finally {
       setSaving(false);
@@ -219,6 +324,7 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
       return;
     }
 
+    onDismissStorageError();
     setConfirmed(true);
     setMessage('');
     setProcessingStep(0);
@@ -373,6 +479,8 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
         title="Technician capture — Field Note"
         description="Record a voice note or enter text, add context, and attach media as needed."
       />
+
+      {storageError && <StorageAlertBanner message={storageError} onDismiss={onDismissStorageError} />}
 
       <div
         className="capture-layout"
@@ -803,51 +911,141 @@ function CapturePage({ onSave }: { onSave: (draft: Draft) => Promise<void> }) {
   );
 }
 
-function AttachmentLink({ file }: { file: Draft['attachments'][number] }) {
-  const url = useMemo(() => URL.createObjectURL(file.blob), [file.blob]);
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+function SyncStatusBadge({ status }: { status: DraftSyncStatus }) {
+  const stylesByStatus: Record<DraftSyncStatus, { label: string; color: string; background: string }> = {
+    pending: { label: 'Pending', color: '#98621f', background: '#fff1dc' },
+    uploading: { label: 'Uploading', color: '#08677a', background: '#e7f2f4' },
+    completed: { label: 'Completed', color: '#25845a', background: '#e5f4eb' },
+    failed: { label: 'Failed', color: '#b84a3a', background: '#fbe9e6' },
+  };
+  const style = stylesByStatus[status];
   return (
-    <a href={url} download={file.name}>
-      {file.name}
-    </a>
+    <span
+      className="pending-tag"
+      data-sync-status={status}
+      style={{
+        color: style.color,
+        background: style.background,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {style.label}
+    </span>
   );
 }
 
-function DraftMedia({ draft }: { draft: Draft }) {
-  const audioUrl = useMemo(
-    () => (draft.audio ? URL.createObjectURL(draft.audio) : ''),
-    [draft.audio]
-  );
-  useEffect(
-    () => () => {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-    },
-    [audioUrl]
-  );
+function DraftMedia({
+  draft,
+  mediaUrls,
+}: {
+  draft: Draft;
+  mediaUrls?: DraftMediaUrls;
+}) {
+  const audioUrl = mediaUrls?.audioUrl;
+  const attachmentUrls = mediaUrls?.attachmentUrls ?? [];
+
+  if (!audioUrl && draft.attachments.length === 0) return null;
 
   return (
     <div className="draft-media">
       {audioUrl && <audio controls src={audioUrl} />}
-      {draft.attachments.map((file, index) => (
-        <AttachmentLink key={`${file.name}-${index}`} file={file} />
-      ))}
+      {draft.attachments.map((file, index) => {
+        const href = attachmentUrls[index];
+        if (!href) return null;
+        return (
+          <a key={`${file.name}-${index}`} href={href} download={file.name}>
+            {file.name}
+          </a>
+        );
+      })}
     </div>
   );
 }
 
 function DraftsPage({
   drafts,
+  quotaStatus,
+  storageError,
+  onDismissStorageError,
   onRemove,
   onRecover,
   onNavigateToCapture,
 }: {
   drafts: Draft[];
+  quotaStatus: StorageQuotaStatus | null;
+  storageError: string | null;
+  onDismissStorageError: () => void;
   onRemove: (id: string) => void;
   onRecover: () => void;
   onNavigateToCapture: () => void;
 }) {
   const [filter, setFilter] = useState('all');
-  const visible = drafts.filter((draft) => filter === 'all' || draft.mode.toLowerCase() === filter);
+  const [mediaUrlsById, setMediaUrlsById] = useState<Record<string, DraftMediaUrls>>({});
+  const activeUrlsRef = useRef<Map<string, DraftMediaUrls>>(new Map());
+
+  const revokeEntry = useCallback((entry?: DraftMediaUrls) => {
+    if (!entry) return;
+    if (entry.audioUrl) URL.revokeObjectURL(entry.audioUrl);
+    for (const url of entry.attachmentUrls) {
+      URL.revokeObjectURL(url);
+    }
+  }, []);
+
+  const revokeAllActiveUrls = useCallback(() => {
+    for (const entry of activeUrlsRef.current.values()) {
+      revokeEntry(entry);
+    }
+    activeUrlsRef.current.clear();
+    setMediaUrlsById({});
+  }, [revokeEntry]);
+
+  const visible = useMemo(
+    () => drafts.filter((draft) => filter === 'all' || draft.mode.toLowerCase() === filter),
+    [drafts, filter],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const nextMap = new Map<string, DraftMediaUrls>();
+    const nextRecord: Record<string, DraftMediaUrls> = {};
+
+    for (const draft of visible) {
+      const audioUrl = draft.audio ? URL.createObjectURL(draft.audio) : undefined;
+      const attachmentUrls = draft.attachments.map((file) => URL.createObjectURL(file.blob));
+      const entry: DraftMediaUrls = { audioUrl, attachmentUrls };
+      nextMap.set(draft.id, entry);
+      nextRecord[draft.id] = entry;
+    }
+
+    activeUrlsRef.current = nextMap;
+    void Promise.resolve().then(() => {
+      if (!cancelled) setMediaUrlsById(nextRecord);
+    });
+
+    return () => {
+      cancelled = true;
+      for (const entry of nextMap.values()) {
+        revokeEntry(entry);
+      }
+      if (activeUrlsRef.current === nextMap) {
+        activeUrlsRef.current = new Map();
+      }
+    };
+  }, [visible, revokeEntry]);
+
+  const handleRemove = (id: string) => {
+    const entry = activeUrlsRef.current.get(id);
+    if (entry) {
+      revokeEntry(entry);
+      activeUrlsRef.current.delete(id);
+    }
+    onRemove(id);
+  };
+
+  const handleRecover = () => {
+    revokeAllActiveUrls();
+    onRecover();
+  };
 
   return (
     <>
@@ -855,14 +1053,39 @@ function DraftsPage({
         title="Technician saved notes"
         description="Manage locally saved notes, review observations, and continue when you're ready."
       />
+      {storageError && <StorageAlertBanner message={storageError} onDismiss={onDismissStorageError} />}
       <section className="panel drafts-panel">
         <div className="draft-toolbar">
           <div>
             <h2>Saved notes (drafts)</h2>
             <p>Notes and media saved locally on this device.</p>
-            <button type="button" className="button-light" onClick={onRecover} style={{ marginTop: '8px' }}>
-              <Icon name="refresh" /> Recover offline drafts
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
+              <button type="button" className="button-light" onClick={handleRecover}>
+                <Icon name="refresh" /> Recover offline drafts
+              </button>
+              {quotaStatus && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    borderRadius: '7px',
+                    border: '1px solid #dce8ec',
+                    background: '#f2f7f9',
+                    color: '#526b75',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                  }}
+                >
+                  <Icon name="database" style={{ width: '14px', height: '14px', color: '#08677a' }} />
+                  {quotaStatus.quotaBytes > 0
+                    ? `Storage: ${formatBytes(quotaStatus.usageBytes)} / ${formatBytes(quotaStatus.quotaBytes)} (${quotaStatus.percentUsed.toFixed(1)}%)`
+                    : `Storage: ${formatBytes(quotaStatus.usageBytes)} used`}
+                  {quotaStatus.isPersisted ? ' · Persistent' : ''}
+                </span>
+              )}
+            </div>
           </div>
           <div className="filter-tabs">
             <button
@@ -891,31 +1114,45 @@ function DraftsPage({
 
         {visible.length ? (
           <div className="draft-list">
-            {visible.map((draft) => (
-              <article className="draft-item" key={draft.id}>
-                <span className="draft-icon">
-                  <Icon name={draft.mode === 'Voice' ? 'mic' : 'file'} />
-                </span>
-                <div className="draft-copy">
-                  <strong>{draft.equipment || 'Field observation'}</strong>
-                  <p>{draft.observation || draft.symptom || 'No observation text added'}</p>
-                  <small>
-                    {new Date(draft.date).toLocaleString()} · {draft.mode}
-                    {draft.duration ? ` · ${formatDuration(draft.duration)}` : ''}
-                  </small>
-                  <DraftMedia draft={draft} />
-                </div>
-                <span className="pending-tag">Saved locally</span>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label="Delete draft"
-                  onClick={() => onRemove(draft.id)}
-                >
-                  <Icon name="trash" />
-                </button>
-              </article>
-            ))}
+            {visible.map((draft) => {
+              const syncStatus = normalizeSyncStatusLabel(draft.syncStatus);
+              const durationMs = draft.durationMs ?? draft.duration;
+              const audioBytes = draft.audioSizeBytes ?? draft.audio?.size ?? 0;
+              const attachmentBytes = draft.attachments.reduce((sum, item) => sum + (item.size ?? item.blob.size ?? 0), 0);
+
+              return (
+                <article className="draft-item" key={draft.id}>
+                  <span className="draft-icon">
+                    <Icon name={draft.mode === 'Voice' ? 'mic' : 'file'} />
+                  </span>
+                  <div className="draft-copy">
+                    <strong>{draft.equipment || 'Field observation'}</strong>
+                    <p>{draft.observation || draft.symptom || 'No observation text added'}</p>
+                    <small>
+                      {new Date(draft.recordedAt ?? draft.date).toLocaleString()} · {draft.mode}
+                      {durationMs > 0 ? ` · ${formatDuration(durationMs)}` : ''}
+                      {audioBytes > 0 ? ` · Audio ${formatBytes(audioBytes)}` : ''}
+                      {attachmentBytes > 0 ? ` · ${draft.attachments.length} file(s) (${formatBytes(attachmentBytes)})` : ''}
+                    </small>
+                    {syncStatus === 'failed' && draft.lastError && (
+                      <small style={{ display: 'block', color: '#b84a3a', marginTop: '4px' }}>
+                        Sync error: {draft.lastError}
+                      </small>
+                    )}
+                    <DraftMedia draft={draft} mediaUrls={mediaUrlsById[draft.id]} />
+                  </div>
+                  <SyncStatusBadge status={syncStatus} />
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Delete draft"
+                    onClick={() => handleRemove(draft.id)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="empty-state">
@@ -1108,32 +1345,59 @@ function ProfilePage({ online }: { online: boolean }) {
 
 export const TechnicianPage: React.FC = () => {
   const online = useNetworkStatus();
+  const currentUserId = getCurrentUser()?.id;
   const [page, setPage] = useState<Page>('capture');
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [quotaStatus, setQuotaStatus] = useState<StorageQuotaStatus | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [notice, setNotice] = useState('');
+  const [storageError, setStorageError] = useState<string | null>(null);
+
+  const refreshQuotaStatus = useCallback(async () => {
+    try {
+      const status = await getStorageQuotaStatus();
+      setQuotaStatus(status);
+    } catch {
+      /* Ignore storage quota estimate unavailability */
+    }
+  }, []);
+
+  const loadScopedDrafts = useCallback(async (): Promise<Draft[]> => {
+    const allDrafts = await getDrafts();
+    return scopeDraftsToUser(allDrafts, currentUserId);
+  }, [currentUserId]);
 
   const recover = async () => {
     try {
-      const saved = await getDrafts();
+      const saved = await loadScopedDrafts();
       setDrafts(saved);
+      setStorageError(null);
       setStorageReady(true);
+      await refreshQuotaStatus();
       setNotice('Offline drafts recovered from this device.');
       setTimeout(() => setNotice(''), 2500);
-    } catch {
-      setNotice('Local draft storage is unavailable in this browser.');
+    } catch (error) {
+      setStorageError(
+        extractStorageErrorMessage(error, 'Local draft storage is unavailable in this browser.'),
+      );
       setStorageReady(true);
     }
   };
 
   useEffect(() => {
     let active = true;
-    getDrafts()
-      .then((saved) => {
-        if (active) setDrafts(saved);
+    Promise.all([loadScopedDrafts(), getStorageQuotaStatus()])
+      .then(([saved, quota]) => {
+        if (!active) return;
+        setDrafts(saved);
+        setQuotaStatus(quota);
+        setStorageError(null);
       })
-      .catch(() => {
-        if (active) setNotice('Local draft storage is unavailable in this browser.');
+      .catch((error) => {
+        if (!active) return;
+        setStorageError(
+          extractStorageErrorMessage(error, 'Local draft storage is unavailable in this browser.'),
+        );
       })
       .finally(() => {
         if (active) setStorageReady(true);
@@ -1141,16 +1405,40 @@ export const TechnicianPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadScopedDrafts]);
 
   const save = async (draft: Draft) => {
-    await saveDraft(draft);
-    setDrafts((current) => [draft, ...current]);
+    try {
+      await saveDraft(draft);
+      setStorageError(null);
+      try {
+        const refreshed = await loadScopedDrafts();
+        setDrafts(refreshed);
+      } catch {
+        setDrafts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
+      }
+      await refreshQuotaStatus();
+    } catch (error) {
+      const message = extractStorageErrorMessage(
+        error,
+        'Could not save this draft. Check available device storage and try again.',
+      );
+      setStorageError(message);
+      throw error;
+    }
   };
 
   const remove = async (id: string) => {
-    await deleteDraft(id);
-    setDrafts((current) => current.filter((draft) => draft.id !== id));
+    try {
+      await deleteDraft(id);
+      setStorageError(null);
+      setDrafts((current) => current.filter((draft) => draft.id !== id));
+      await refreshQuotaStatus();
+    } catch (error) {
+      setStorageError(
+        extractStorageErrorMessage(error, 'Could not delete this draft from local storage.'),
+      );
+    }
   };
 
   const title = useMemo(
@@ -1186,10 +1474,19 @@ export const TechnicianPage: React.FC = () => {
         )}
         {!storageReady && <p className="storage-hint">Restoring saved drafts…</p>}
 
-        {page === 'capture' && <CapturePage onSave={save} />}
+        {page === 'capture' && (
+          <CapturePage
+            onSave={save}
+            storageError={storageError}
+            onDismissStorageError={() => setStorageError(null)}
+          />
+        )}
         {page === 'drafts' && (
           <DraftsPage
             drafts={drafts}
+            quotaStatus={quotaStatus}
+            storageError={storageError}
+            onDismissStorageError={() => setStorageError(null)}
             onRemove={(id) => void remove(id)}
             onRecover={() => void recover()}
             onNavigateToCapture={() => setPage('capture')}
