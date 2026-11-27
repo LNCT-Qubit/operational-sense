@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ApiRequestError, loginRequest, signupRequest, workspacePathForRole } from '../api/auth';
 import { clearSession, setSession } from '../api/session';
+import { syncPendingDrafts } from '../services/syncManager';
 
 export type UserRole = 'supervisor' | 'technician';
 export type AuthMode = 'login' | 'signup';
@@ -59,7 +60,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         setFormMessage({ kind: 'error', text: 'Your account does not have a workspace in this app yet.' });
         return;
       }
-      setSession(result);          // token is kept in memory only (see api/session.ts)
+      setSession(result);      
+      if (result.user.role === 'TECHNICIAN') {
+  void syncPendingDrafts();
+}    // token is kept in memory only (see api/session.ts)
       setPassword('');
       if (onAuthSuccess) {
         onAuthSuccess(result.user.email, result.user.role === 'SUPERVISOR' ? 'supervisor' : 'technician', 'login');

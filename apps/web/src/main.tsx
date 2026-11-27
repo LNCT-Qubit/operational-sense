@@ -5,6 +5,9 @@ import App from './App'
 import './index.css'
 import './styles/tokens.css'
 import './styles/app.css'
+import { startSyncManager } from './services/syncManager'
+
+startSyncManager()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
