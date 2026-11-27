@@ -1,3 +1,4 @@
+
 /** Composition root: reads config, wires real implementations together, starts listening. */
 import { loadConfig } from './config/env';
 import { createLogger } from './http/logger';
@@ -12,14 +13,25 @@ import { PostgresUserStore } from './modules/users/user.repository';
 import { createBcryptHasher } from './modules/users/password-hasher';
 import { SignupService } from './modules/users/signup.service';
 import { LoginService } from './modules/users/login.service';
+import { CaseRepository } from './modules/cases/case.repository';
+import { CaseService } from './modules/cases/case.service';
 
 async function main(): Promise<void> {
-  try { require('dotenv').config(); } catch { /* dotenv is optional: real environments inject variables */ }
+  try {
+    require('dotenv').config();
+  } catch {
+    /* dotenv is optional: real environments inject variables */
+  }
+
   const config = loadConfig();
   const logger = createLogger(config.logLevel);
 
   const pool = createPool(config.databaseUrl);
-  await assertAppRoleSafe(pool, logger);           // refuse to start as superuser/BYPASSRLS
+  await assertAppRoleSafe(pool, logger);
+
+  // Block 4: Case Management
+  const caseRepository = new CaseRepository(pool);
+  const caseService = new CaseService(caseRepository);
 
   // US-06's Gemini client builds itself at import time, so it is loaded only here, never in unit tests.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -30,31 +42,73 @@ async function main(): Promise<void> {
     new LocalAudioStorage(config.uploadDir),
     new HttpTranscriptionClient(config.transcriber),
     new Us06DraftCreator(pool, callLLM),
-    { autoProcess: config.autoProcess, staleClaimSeconds: config.staleClaimSeconds, maxTranscriptionAttempts: config.maxTranscriptionAttempts },
+    {
+      autoProcess: config.autoProcess,
+      staleClaimSeconds: config.staleClaimSeconds,
+      maxTranscriptionAttempts: config.maxTranscriptionAttempts,
+    },
     logger,
   );
 
   const userStore = new PostgresUserStore(pool);
-  const hasher = createBcryptHasher(config.signup.bcryptRounds);   // one hasher shared by signup (hash) and login (compare)
-  const signupService = new SignupService(userStore, hasher, { organizationName: config.signup.organizationName }, logger);
-  const loginService = new LoginService(userStore, hasher, { jwtSecret: config.jwtSecret, tokenTtlSeconds: config.login.tokenTtlSeconds }, logger);
-  // Friendly startup hint for beginners: signup cannot work until migration 010 has created the organization.
+  const hasher = createBcryptHasher(config.signup.bcryptRounds);
+
+  const signupService = new SignupService(
+    userStore,
+    hasher,
+    { organizationName: config.signup.organizationName },
+    logger,
+  );
+
+  const loginService = new LoginService(
+    userStore,
+    hasher,
+    {
+      jwtSecret: config.jwtSecret,
+      tokenTtlSeconds: config.login.tokenTtlSeconds,
+    },
+    logger,
+  );
+
+  // Signup requires migration 010 to have created the organization.
   try {
     if (!(await userStore.resolveSignupOrgId(config.signup.organizationName))) {
-      logger.warn('signup organization not found: run migration 010_users.sql (or fix SIGNUP_ORG_NAME)', { organization_name: config.signup.organizationName });
+      logger.warn(
+        'signup organization not found: run migration 010_users.sql (or fix SIGNUP_ORG_NAME)',
+        { organization_name: config.signup.organizationName },
+      );
     }
-  } catch { logger.warn('could not check the signup organization: has migration 010_users.sql been applied?'); }
+  } catch {
+    logger.warn('could not check the signup organization: has migration 010_users.sql been applied?');
+  }
 
-  const app = createApp({ config, service, logger, signup: { service: signupService, loginService, corsAllowedOrigins: config.signup.corsAllowedOrigins }, ping: async () => { await pool.query('SELECT 1'); } });
-  const server = app.listen(config.port, () => logger.info('backend listening', { port: config.port }));
+  const app = createApp({
+    config,
+    service,
+    caseService,
+    logger,
+    signup: {
+      service: signupService,
+      loginService,
+      corsAllowedOrigins: config.signup.corsAllowedOrigins,
+    },
+    ping: async () => {
+      await pool.query('SELECT 1');
+    },
+  });
+
+  const server = app.listen(config.port, () => {
+    logger.info('backend listening', { port: config.port });
+  });
 
   const shutdown = async (signal: string) => {
     logger.info('shutting down', { signal });
     server.close();
-    await service.idle();                          // let in-flight processing finish and persist its state
+    await service.idle();
     await pool.end();
     process.exit(0);
   };
+
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
   process.on('SIGINT', () => void shutdown('SIGINT'));
 }
