@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from 'react';
 
-type IconName = 'mic' | 'history' | 'user' | 'refresh' | 'database' | 'shield' | 'clock' | 'play' | 'pause' | 'stop' | 'trash' | 'download' | 'wifi' | 'menu' | 'check' | 'info' | 'mail' | 'phone' | 'search' | 'file' | 'gear' | 'layers' | 'chevron' | 'paperclip' | 'camera' | 'video' | 'edit' | 'cloud' | 'alert' | 'close' | 'arrow' | 'upload' | 'book' | 'network';
+type IconName = 'mic' | 'history' | 'user' | 'refresh' | 'database' | 'shield' | 'clock' | 'play' | 'pause' | 'stop' | 'trash' | 'download' | 'wifi' | 'menu' | 'check' | 'info' | 'mail' | 'phone' | 'search' | 'file' | 'gear' | 'layers' | 'chevron' | 'paperclip' | 'camera' | 'video' | 'edit' | 'cloud' | 'alert' | 'close' | 'arrow' | 'arrow-left' | 'circle' | 'upload' | 'book' | 'network';
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -27,7 +27,7 @@ export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconN
     video: <><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></>,
     edit: <><path d="m4 16-.8 4.8L8 20l11-11-4-4zM13.5 6.5l4 4"/></>,
     cloud: <path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 20 10a4 4 0 0 1-1 8H7zm5-7v8m-3-3 3 3 3-3"/>,
-    alert: <><path d="M12 3 2.8 20h18.4z"/><path d="M12 9v5m0 3h.01"/></>, close: <path d="m6 6 12 12M18 6 6 18"/>, arrow: <path d="M5 12h14m-6-6 6 6-6 6"/>,
+    alert: <><path d="M12 3 2.8 20h18.4z"/><path d="M12 9v5m0 3h.01"/></>, close: <path d="m6 6 12 12M18 6 6 18"/>, arrow: <path d="M5 12h14m-6-6 6 6-6 6"/>, 'arrow-left': <path d="M19 12H5m6-6-6 6 6 6"/>, circle: <circle cx="12" cy="12" r="9"/>,
     upload: <><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 15v5h16v-5"/></>, book: <><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 4.5V22m4-15h8"/></>,
     network: <><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="m10.8 7.2-4.5 8.5m6.9-8.5 4.5 8.5M7.5 18h9"/></>,
   };
