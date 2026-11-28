@@ -17,3 +17,5 @@ venv/
 data/raw/*
 !data/raw/README.md
 *.log
+uploads/*
+!uploads/.gitkeep

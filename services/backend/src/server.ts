@@ -86,8 +86,20 @@ async function main(): Promise<void> {
   process.on('SIGINT', () => void shutdown('SIGINT'));
 }
 
-main().catch((err) => {
+function startupErrorMessage(error: unknown): string {
+  if (error instanceof AggregateError) {
+    const causes = error.errors.map(startupErrorMessage);
+    return causes.length ? `${error.name}: ${causes.join(', ')}` : error.name;
+  }
+  if (error instanceof Error) {
+    const code = 'code' in error && typeof error.code === 'string' ? error.code : '';
+    return error.message || code || error.name;
+  }
+  return String(error);
+}
+
+main().catch((err: unknown) => {
   // eslint-disable-next-line no-console
-  console.error('startup failed:', (err as Error).message);
+  console.error('startup failed:', startupErrorMessage(err));
   process.exit(1);
 });
