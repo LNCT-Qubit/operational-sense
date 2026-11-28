@@ -37,7 +37,10 @@ export function recordingView(r: RecordingRow) {
   };
 }
 
-const draftView = (d: DraftSummary | null) => d && { id: d.id, status: d.status, missing_fields: d.missing_fields, transcription_id: d.transcription_id, created_at: d.created_at };
+const draftView = (d: DraftSummary | null) => d && {
+  id: d.id, status: d.status, missing_fields: d.missing_fields, transcription_id: d.transcription_id, created_at: d.created_at,
+  extraction: d.extraction ?? null,   // the persisted, schema-validated fields (null = not mentioned, uncertain_fields = unclear)
+};
 
 export function stateView(s: CaptureState) {
   const t = s.transcription;

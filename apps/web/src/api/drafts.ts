@@ -479,6 +479,67 @@ export function fetchAttachmentBlobUrl(
   );
 }
 
+/** Starts (or resumes/retries) server-side processing of an uploaded recording. 202 = accepted, runs in the background. */
+export function processServerRecordingRequest(
+  recordingId: string,
+  signal?: AbortSignal,
+  timeoutMs: number = UPLOAD_TIMEOUT_MS,
+): Promise<ApiCallOutcome<unknown>> {
+  return runSyncMutation<unknown>(
+    `/api/v1/recordings/${encodeURIComponent(recordingId)}/process`,
+    { method: 'POST' },
+    signal,
+    timeoutMs,
+  );
+}
+
+/** Shape of GET /api/v1/recordings/:id (see services/backend recording.handlers.ts `stateView`). Real, persisted server data. */
+export interface ServerRecordingState {
+  recording: {
+    id: string;
+    client_recording_id: string;
+    status: string;
+    mime_type: string;
+    size_bytes: number;
+    duration_ms: number | null;
+    recorded_at: string | null;
+    transcription_attempts: number;
+    failure: { code: string; message: string | null; retryable: boolean } | null;
+    created_at: string;
+    updated_at: string;
+  };
+  transcription: {
+    id: string;
+    attempt_number: number;
+    status: string;
+    transcript: string | null;
+    language: string | null;
+    language_probability: number | null;
+    processing_duration_seconds: number | null;
+    model_name: string;
+    error_code: string | null;
+    created_at: string;
+  } | null;
+  draft: {
+    id: string;
+    status: string;
+    missing_fields: string[];
+    transcription_id: string;
+    created_at: string;
+    /** Validated extraction JSON: equipment, symptom, operating_condition, observation, uncertain_fields. */
+    extraction: Record<string, unknown> | null;
+  } | null;
+}
+
+/** Reads the real processing state (status, transcript, extraction) of an uploaded recording from the backend. */
+export function getServerRecordingState(recordingId: string, signal?: AbortSignal): Promise<ServerRecordingState> {
+  return runAuthedJson<ServerRecordingState>(
+    `/api/v1/recordings/${encodeURIComponent(recordingId)}`,
+    { method: 'GET' },
+    signal,
+  );
+}
+
 export function fetchRecordingAudioUrl(recordingId: string, signal?: AbortSignal): Promise<string> {
   return fetchAuthedBlobUrl(`/api/v1/recordings/${encodeURIComponent(recordingId)}/audio`, signal);
 }

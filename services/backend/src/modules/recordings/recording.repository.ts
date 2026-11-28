@@ -47,7 +47,10 @@ export function mapTranscription(r: any): TranscriptionRow {
 }
 
 function mapDraft(r: any): DraftSummary {
-  return { id: r.id, status: r.status, missing_fields: r.missing_fields, transcription_id: r.transcription_id, created_at: iso(r.created_at)! };
+  return {
+    id: r.id, status: r.status, missing_fields: r.missing_fields, transcription_id: r.transcription_id, created_at: iso(r.created_at)!,
+    extraction: r.extraction && typeof r.extraction === 'object' ? r.extraction : null,
+  };
 }
 
 async function audit(db: Queryable, org: string, actor: string, action: string, entityId: string, details: Record<string, unknown>): Promise<void> {
@@ -230,7 +233,7 @@ export class PostgresPipelineStore implements PipelineStore {
   getDraftSummary(org: string, recordingId: string) {
     return withTenant(this.pool, org, async (db) => {
       const r = await db.query(
-        `SELECT id, status, missing_fields, transcription_id, created_at FROM extraction_draft
+        `SELECT id, status, missing_fields, transcription_id, created_at, extraction FROM extraction_draft
           WHERE organization_id = $1 AND recording_id = $2
           ORDER BY (status <> 'REJECTED') DESC, created_at DESC LIMIT 1`,
         [org, recordingId],

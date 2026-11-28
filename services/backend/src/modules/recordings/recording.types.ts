@@ -45,6 +45,11 @@ export interface DraftSummary {
   missing_fields: string[];
   transcription_id: string;
   created_at: string;
+  /**
+   * The validated US-06 extraction JSON (equipment, symptom, operating_condition, observation, uncertain_fields),
+   * exactly as persisted in extraction_draft.extraction. Optional so lightweight stores/fakes may omit it.
+   */
+  extraction?: Record<string, unknown> | null;
 }
 
 /** What the backend needs from US-05's TranscriptionResult (see services/ai-engine/app/transcription/models.py). */

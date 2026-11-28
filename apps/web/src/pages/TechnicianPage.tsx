@@ -7,6 +7,7 @@ import {
   fetchAttachmentBlobUrl,
   fetchRecordingAudioUrl,
   listServerDrafts,
+  processServerRecordingRequest,
   searchServerCases,
   type ServerAttachmentMeta,
   type ServerCaseItem,
@@ -29,6 +30,9 @@ import { useSyncStatus } from '../hooks/useSyncStatus';
 import { syncPendingDrafts, type SyncStateSnapshot } from '../services/syncManager';
 import { Brand } from '../component/technicainComponent/Brand';
 import { Icon } from '../component/technicainComponent/Icons';
+import { PipelineStatus } from '../component/technicainComponent/PipelineStatus';
+import { CaptureProgress } from '../component/technicainComponent/CaptureProgress';
+import { buildPipelineSnapshot, isInFlightStatus, type PipelineSnapshot } from '../features/pipelineStatus';
 
 type Page = 'capture' | 'drafts' | 'search' | 'profile';
 type Draft = TechnicianDraft;
@@ -36,6 +40,7 @@ type DisplayDraft = Draft & {
   isServerOnly?: boolean;
   serverStatus?: ServerDraftDetail['status'];
   recordingStatus?: string;
+  pipeline?: PipelineSnapshot | null;
   transcriptionText?: string | null;
   reviewComment?: string | null;
   serverAttachments?: ServerAttachmentMeta[];
@@ -292,15 +297,9 @@ function CapturePage({
   const [message, setMessage] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [stage, setStage] = useState<CaptureStage>('capture');
-  const [processingStep, setProcessingStep] = useState(0);
   const [referenceId, setReferenceId] = useState('');
-
-  const processingSteps = [
-    'Analyzing observation',
-    'Preparing transcription',
-    'Detecting sentiment',
-    'Extracting information',
-  ];
+  /** Whether the observation just saved has a voice recording (decides if server-side processing is tracked). */
+  const [savedHasAudio, setSavedHasAudio] = useState(false);
 
   const recording = recorder.status === 'recording';
   const paused = recorder.status === 'paused';
@@ -350,6 +349,7 @@ function CapturePage({
 
       setMessage('');
       setReferenceId(draftId);
+      setSavedHasAudio(!!audio);
       setForm(emptyDraft());
       setFiles([]);
       recorder.discardRecording();
@@ -375,13 +375,9 @@ function CapturePage({
     onDismissStorageError();
     setConfirmed(true);
     setMessage('');
-    setProcessingStep(0);
+    // 'processing' now means exactly one real thing: writing the observation to this device (awaited below).
+    // Upload, transcription and extraction are shown on the next screen from real server/device state.
     setStage('processing');
-
-    for (let i = 0; i < processingSteps.length; i++) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 1400));
-      setProcessingStep(i + 1);
-    }
 
     await save();
   };
@@ -865,45 +861,10 @@ function CapturePage({
                 </span>
               </div>
 
-              <h2>Your observation is being analyzed</h2>
-              <p className="technician-processing-active">
-                {processingStep < processingSteps.length
-                  ? `${processingSteps[processingStep]}…`
-                  : 'Preparing your saved observation…'}
-              </p>
-
-              <div className="technician-processing-list">
-                {processingSteps.map((step, index) => {
-                  const completed = index < processingStep;
-                  const active = index === processingStep;
-
-                  return (
-                    <div className="technician-processing-item" key={step}>
-                      <span
-                        className={`technician-processing-status ${
-                          completed ? 'completed' : active ? 'active' : 'pending'
-                        }`}
-                      >
-                        {completed ? (
-                          <Icon name="check" />
-                        ) : active ? (
-                          <span className="technician-processing-spinner">
-                            <Icon name="refresh" />
-                          </span>
-                        ) : (
-                          <Icon name="circle" />
-                        )}
-                      </span>
-                      <span style={{ fontWeight: completed || active ? 600 : 400 }}>
-                        {step}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
+              <h2>Saving your observation</h2>
+              <p className="technician-processing-active">Saving on this device…</p>
               <p className="storage-hint" style={{ marginTop: '24px' }}>
-                Please wait while your observation is prepared for saving on this device.
+                Next you will see the real upload, transcription and extraction progress from the server.
               </p>
             </div>
           </section>
@@ -916,8 +877,12 @@ function CapturePage({
                 <Icon name="check" />
               </div>
 
-              <h2>Observation saved successfully.</h2>
-              <p>Your observation and attached media have been saved on this device.</p>
+              <h2>Observation saved on this device.</h2>
+              <p>
+                {savedHasAudio
+                  ? 'Your recording is uploading and being processed. The steps below show the real status from the server.'
+                  : 'Your observation has been saved on this device.'}
+              </p>
 
               <div className="technician-reference">
                 <span className="eyebrow">LOCAL CASE ID</span>
@@ -926,8 +891,10 @@ function CapturePage({
                 </p>
               </div>
 
+              <CaptureProgress key={referenceId} draftId={referenceId} hasAudio={savedHasAudio} />
+
               <p className="storage-hint">
-                Saved locally. Notes, audio, and attachments sync automatically in the background when online and signed in.
+                Notes, audio, and attachments sync automatically in the background when online and signed in. Offline recordings are kept on this device and upload when you reconnect.
               </p>
 
               <div className="technician-flow-actions">
@@ -1036,6 +1003,7 @@ function DraftsPage({
   onDismissStorageError,
   onRemove,
   onRetry,
+  onRefreshServer,
   onRecover,
   onNavigateToCapture,
 }: {
@@ -1047,10 +1015,36 @@ function DraftsPage({
   onDismissStorageError: () => void;
   onRemove: (draft: DisplayDraft) => void;
   onRetry: (id: string) => void;
+  onRefreshServer: () => void;
   onRecover: () => void;
   onNavigateToCapture: () => void;
 }) {
   const [filter, setFilter] = useState('all');
+  const [retryingIds, setRetryingIds] = useState<Record<string, boolean>>({});
+  const [retryErrors, setRetryErrors] = useState<Record<string, string>>({});
+
+  const retryProcessing = useCallback(
+    async (recordingId: string) => {
+      setRetryingIds((cur) => ({ ...cur, [recordingId]: true }));
+      setRetryErrors((cur) => {
+        const next = { ...cur };
+        delete next[recordingId];
+        return next;
+      });
+      const outcome = await processServerRecordingRequest(recordingId);
+      setRetryingIds((cur) => ({ ...cur, [recordingId]: false }));
+      if (!outcome.ok) {
+        setRetryErrors((cur) => ({
+          ...cur,
+          [recordingId]: outcome.authError
+            ? 'Your session expired. Sign in again to retry.'
+            : (outcome.errorMessage ?? 'Could not restart processing. Please try again.'),
+        }));
+      }
+      onRefreshServer();
+    },
+    [onRefreshServer],
+  );
   const [mediaUrlsById, setMediaUrlsById] = useState<Record<string, DraftMediaUrls>>({});
   const [serverAudioUrlsById, setServerAudioUrlsById] = useState<Record<string, string>>({});
   const activeUrlsRef = useRef<Map<string, DraftMediaUrls>>(new Map());
@@ -1273,7 +1267,15 @@ function DraftsPage({
                       {draft.recordingStatus ? ` · Pipeline: ${draft.recordingStatus}` : ''}
                       {draft.isServerOnly ? ' · Cloud copy' : ''}
                     </small>
-                    {draft.transcriptionText && (
+                    {draft.pipeline && (
+                      <PipelineStatus
+                        snapshot={draft.pipeline}
+                        retrying={!!retryingIds[draft.pipeline.recordingId]}
+                        retryError={retryErrors[draft.pipeline.recordingId]}
+                        onRetry={() => void retryProcessing(draft.pipeline!.recordingId)}
+                      />
+                    )}
+                    {!draft.pipeline && draft.transcriptionText && (
                       <small style={{ display: 'block', color: '#08677a', marginTop: '4px' }}>
                         Transcript: {draft.transcriptionText}
                       </small>
@@ -1563,16 +1565,16 @@ export const TechnicianPage: React.FC = () => {
     return scopeDraftsToUser(allDrafts, currentUserId);
   }, [currentUserId]);
 
-  const refreshServerDrafts = useCallback(async () => {
+  const refreshServerDrafts = useCallback(async (silent = false) => {
     if (!navigator.onLine || !getAccessToken()) return;
-    setLoadingServer(true);
+    if (!silent) setLoadingServer(true);
     try {
       const res = await listServerDrafts({ limit: 50, offset: 0 });
       setServerDrafts(res.items);
     } catch {
       /* Ignore background fetch failures while offline or expired */
     } finally {
-      setLoadingServer(false);
+      if (!silent) setLoadingServer(false);
     }
   }, []);
 
@@ -1631,6 +1633,14 @@ export const TechnicianPage: React.FC = () => {
     }
   }, [page, online, refreshServerDrafts]);
 
+  // Poll while any uploaded recording is still being transcribed/extracted, so the technician sees real progress.
+  const hasInFlightRecording = serverDrafts.some((s) => isInFlightStatus(s.recording?.processing_status));
+  useEffect(() => {
+    if (page !== 'drafts' || !online || !hasInFlightRecording) return;
+    const timer = window.setInterval(() => void refreshServerDrafts(true), 5000);
+    return () => window.clearInterval(timer);
+  }, [page, online, hasInFlightRecording, refreshServerDrafts]);
+
   useEffect(() => {
     if (syncState.revision === 0) return;
     let active = true;
@@ -1665,6 +1675,7 @@ export const TechnicianPage: React.FC = () => {
               serverRecordingId: local.serverRecordingId ?? match.recording_id ?? undefined,
               serverStatus: match.status,
               recordingStatus: match.recording?.processing_status,
+              pipeline: buildPipelineSnapshot(match),
               transcriptionText: match.transcription?.transcript ?? null,
               reviewComment: match.review_comment,
               serverAttachments: match.attachments,
@@ -1702,6 +1713,7 @@ export const TechnicianPage: React.FC = () => {
         isServerOnly: true,
         serverStatus: s.status,
         recordingStatus: s.recording?.processing_status,
+        pipeline: buildPipelineSnapshot(s),
         transcriptionText: s.transcription?.transcript ?? null,
         reviewComment: s.review_comment,
         serverAttachments: s.attachments,
@@ -1839,6 +1851,7 @@ export const TechnicianPage: React.FC = () => {
             onDismissStorageError={() => setStorageError(null)}
             onRemove={(draft) => void remove(draft)}
             onRetry={(id) => void retry(id)}
+            onRefreshServer={() => void refreshServerDrafts(true)}
             onRecover={() => void recover()}
             onNavigateToCapture={() => setPage('capture')}
           />
